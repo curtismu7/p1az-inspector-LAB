@@ -1,0 +1,16 @@
+{
+  "demos": [
+    {
+      "id": "p1az-inspector",
+      "name": "P1AZ Inspector LAB",
+      "kind": "Tester",
+      "description": "Send decisions to PingOne Authorize and see the verdict, statements and the exact call. One UI runs the offline Mock engine or, owner-run, your own PingOne environment or on-prem PingAuthorize (Live).",
+      "url": "http://localhost:4840",
+      "healthPath": "/api/health",
+      "composeFile": "p1az-inspector-LAB/docker-compose.yml",
+      "composeOverlays": [],
+      "catalogId": "B2",
+      "notes": "Host-run: npm start (port 4840). Docker: docker compose up --build -d (publishes 127.0.0.1:4840 only). Catalog B2 is a stand-in (the nearest row, Authorize policy playground): the catalog has no exact row. Mock needs no setup. Live is owner-run and is set up on the Settings page; request and response shapes are UNVERIFIED."
+    }
+  ]
+}

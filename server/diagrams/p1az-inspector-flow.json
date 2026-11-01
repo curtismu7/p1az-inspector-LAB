@@ -1,0 +1,136 @@
+{
+  "schema": "diagram-studio/1",
+  "id": "p1az-inspector-flow",
+  "title": "P1AZ Inspector: where a decision goes",
+  "lede": "You send one request. Mock answers from built-in rules; Live calls PingOne (cloud) or a PingAuthorize in Docker on your side.",
+  "groups": {
+    "app": {
+      "label": "This app",
+      "color": "dark"
+    },
+    "mock": {
+      "label": "Mock (in this app)",
+      "color": "blue"
+    },
+    "ping": {
+      "label": "PingOne or PingAuthorize",
+      "color": "red"
+    }
+  },
+  "nodes": [
+    {
+      "id": "you",
+      "group": "app",
+      "label": "This page",
+      "sub": [
+        "You pick Mock or Live and press Send"
+      ],
+      "x": 0,
+      "y": 140
+    },
+    {
+      "id": "server",
+      "group": "app",
+      "label": "P1AZ Inspector server",
+      "sub": [
+        "Same request and answer shape for both engines"
+      ],
+      "x": 300,
+      "y": 140
+    },
+    {
+      "id": "mock",
+      "group": "mock",
+      "label": "Mock engine",
+      "sub": [
+        "Built-in rules, no network"
+      ],
+      "x": 600,
+      "y": 20
+    },
+    {
+      "id": "token",
+      "group": "ping",
+      "label": "PingOne token endpoint",
+      "sub": [
+        "Worker app: client credentials"
+      ],
+      "x": 600,
+      "y": 260
+    },
+    {
+      "id": "authz",
+      "group": "ping",
+      "label": "PingOne Authorize",
+      "sub": [
+        "Policy tree returns decision and statements"
+      ],
+      "x": 900,
+      "y": 260
+    },
+    {
+      "id": "onprem",
+      "group": "ping",
+      "label": "PingAuthorize on-prem",
+      "sub": [
+        "Docker on your side: policy decision URL, no token"
+      ],
+      "x": 600,
+      "y": 480
+    }
+  ],
+  "edges": [
+    {
+      "source": "you",
+      "target": "server",
+      "label": "1 Send"
+    },
+    {
+      "source": "server",
+      "target": "mock",
+      "label": "2a Mock"
+    },
+    {
+      "source": "server",
+      "target": "token",
+      "label": "2b Live (cloud): worker token"
+    },
+    {
+      "source": "token",
+      "target": "authz",
+      "label": "3 decision call"
+    },
+    {
+      "source": "server",
+      "target": "onprem",
+      "label": "2c Live (on-prem): decision call"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Mock (the default)",
+      "what": "You send Trust Framework parameters. The built-in rules decide, in the same shape as PingOne, and nothing leaves your machine.",
+      "edges": [
+        0,
+        1
+      ]
+    },
+    {
+      "title": "Live: PingOne cloud",
+      "what": "The server gets a worker token with your worker app (client credentials). The secret stays on the server and is never shown, then posts the parameters to the decision endpoint.",
+      "edges": [
+        0,
+        2,
+        3
+      ]
+    },
+    {
+      "title": "Live: on-prem PingAuthorize",
+      "what": "The server posts the parameters to your PingAuthorize policy decision URL (in Docker on your side). No worker token and no secret are sent.",
+      "edges": [
+        0,
+        4
+      ]
+    }
+  ]
+}

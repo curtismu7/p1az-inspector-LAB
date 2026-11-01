@@ -1,0 +1,15 @@
+**/node_modules
+**/dist
+.env
+.env.bak.*
+.git
+.github
+.githooks
+.data
+docs
+scripts
+CHANGELOG.md
+Dockerfile
+LICENSE
+README.md
+docker-compose.yml

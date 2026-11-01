@@ -1,0 +1,23 @@
+# OrbStack:  HOST_PORT=4840 docker compose up --build -d   ->  http://127.0.0.1:4840
+# The server binds 0.0.0.0 INSIDE the container (P1AZ_BIND is the opt-in, set in the Dockerfile), but the port is published on
+# loopback only. Do not change the 127.0.0.1 below: with Live set up this app holds a worker secret. HOST_PORT must stay in 4840-4849.
+# The container reads no host files: Mock needs none, and Live settings are entered on the Settings page and kept in the named volume.
+name: p1az-inspector-lab
+
+services:
+  p1az-inspector-lab:
+    build: .
+    ports:
+      - "127.0.0.1:${HOST_PORT:-4840}:4840"
+    environment:
+      PORT: "4840"
+    volumes:
+      - p1az-inspector-lab-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+volumes:
+  p1az-inspector-lab-data:

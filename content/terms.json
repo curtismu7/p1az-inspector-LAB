@@ -1,0 +1,55 @@
+[
+  {
+    "id": "pingone-authorize",
+    "term": "PingOne Authorize",
+    "definition": "A PingOne service that evaluates authorization policies and answers a decision request with a verdict. This tool does not ship it: Live talks to an environment you own. The request and response shapes shown here follow an earlier internal integration and are UNVERIFIED against PingOne's own documentation.",
+    "aliases": [
+      "P1AZ"
+    ]
+  },
+  {
+    "id": "decision-endpoint",
+    "term": "Decision endpoint",
+    "definition": "The PingOne Authorize endpoint you post a decision request to. The request is a set of parameters (for example Amount, TransactionType, ToolName); the answer is a verdict plus the statements that explain it. In Live you pick the endpoint on the Console; the Mock engine has a built-in one."
+  },
+  {
+    "id": "decision",
+    "term": "Decision (verdict)",
+    "definition": "What the policy said about one request: PERMIT, DENY, or INDETERMINATE (PingOne could not evaluate, for example because the request left out an attribute it needs). This tool also shows STEP_UP and CONSENT when a permit arrives with an obligation that names one. INDETERMINATE is shown as such and is never read as a permit."
+  },
+  {
+    "id": "statements",
+    "term": "Statements and obligations",
+    "definition": "The words behind a verdict. A statement names the rule or reason (for example an amount limit); an obligation is a condition the caller must meet before the permit counts (step-up authentication, user consent, human approval). The Console lists both and shows the raw response next to them."
+  },
+  {
+    "id": "mock-engine",
+    "term": "Mock engine",
+    "definition": "The default. A small rule set built into this app (amount limit, step-up for large withdrawals, consent for transfers, a deny list and a human-approval list for MCP tools) that answers in the same shape as the real thing. It works offline, needs no tenant, and every call is labelled as Mock so nobody mistakes it for PingOne's answer."
+  },
+  {
+    "id": "live",
+    "term": "Live",
+    "definition": "The opt-in. It sends your request to a real decision service: a PingOne environment you own (worker token, then the decision endpoint) or an on-prem PingAuthorize you run in Docker. It is off by default, and the only host it may reach is the one you configured."
+  },
+  {
+    "id": "worker-token",
+    "term": "Worker token",
+    "definition": "For the PingOne cloud path the app signs in as a PingOne worker application (client credentials) and uses the token to call the decision endpoint. The client secret is write-only: you can set or replace it on the Settings page, or supply it as PINGONE_CLIENT_SECRET in the shared settings file, but it is never returned, logged or shown. The token stays in memory."
+  },
+  {
+    "id": "pingauthorize-onprem",
+    "term": "PingAuthorize on-prem",
+    "definition": "A PingAuthorize instance running in Docker on your side. The call is POST <url>/governance/pap/alpha/policy/<policy id>/decision with the parameters, and it needs no token. UNVERIFIED: the path and answer follow an earlier internal integration and its stand-in mock; they have not been checked against a real PingAuthorize."
+  },
+  {
+    "id": "recent-decisions",
+    "term": "Recent decisions",
+    "definition": "PingOne's own log of the last decisions made against an endpoint, including ones other apps made. Live on the PingOne cloud path can read it; the Mock engine and on-prem PingAuthorize have none."
+  },
+  {
+    "id": "netguard",
+    "term": "Netguard",
+    "definition": "A guard inside the app that refuses every connection to a non-loopback host, so by default nothing leaves your machine. A Live call gets a permit for each host it is calling, one at a time (for PingOne, the token host and then the API host), and gives it back when the answer arrives. `npm run doctor` proves the guard by trying to leave and checking every attempt is refused."
+  }
+]
