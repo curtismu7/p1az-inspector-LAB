@@ -16,6 +16,7 @@ import * as mock from './mockEngine.js';
 import { clip, scrub, scrubJson } from './redact.js';
 import { hostCheck, sameOriginWrites } from './security.js';
 import { createSettings } from './settings.js';
+import { shelfInfo } from './shelfLink.js';
 
 const WEB_DIST = process.env.WEB_DIST || path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../web/dist');
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
@@ -127,6 +128,7 @@ export function createApp({
   app.use('/api', api);
 
   if (fs.existsSync(WEB_DIST)) {
+app.get('/api/shelf', (_req, res) => { res.set('Cache-Control', 'no-store'); res.json(shelfInfo()); }); // the header "Shelf" button
     app.use(express.static(WEB_DIST));
     app.get(/^\/(?!api\/).*/, (_req, res) => res.sendFile(path.join(WEB_DIST, 'index.html')));
   }

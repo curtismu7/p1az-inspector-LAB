@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import ShelfLink from "./components/ShelfLink.jsx";
 import Console from "./pages/Console.jsx";
 import Diagram from "./pages/Diagram.jsx";
 import Settings from "./pages/Settings.jsx";
@@ -69,6 +70,7 @@ export default function App() {
         <div className="head">
           <h1 className="head__title">P1AZ Inspector LAB</h1>
           <div className="head__tools">
+            <ShelfLink />
             <div className="seg" role="group" aria-label="Mode">
               <button type="button" aria-pressed={mode === "mock"} onClick={() => setMode("mock")} data-testid="mode-mock">Mock</button>
               <button type="button" aria-pressed={mode === "live"} onClick={() => setMode("live")} data-testid="mode-live">Live</button>
