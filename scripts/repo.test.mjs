@@ -73,7 +73,7 @@ test('README follows the README standard: title ends in LAB, plain Tier, Repo an
   const r = read('README.md');
   assert.match(r.split('\n')[0], /^# .* LAB$/);
   assert.match(r, /^Tier: Tester$/m);
-  assert.match(r, /^Repo: https:\/\/github\.com\/ping-sandbox\/p1az-inspector-LAB$/m);
+  assert.match(r, /^Repo: https:\/\/github.com/curtismu7\/p1az-inspector-LAB$/m);
   assert.match(r, new RegExp(`^Catalog: ${CATALOG}\\b`, 'm'));
   const order = ['What is simulated', 'Run from a clone', 'Settings file', 'Ports, and what to do if the port is taken', 'Mock and live modes', 'Health, doctor and reset', 'Docker', 'Tests', 'Troubleshooting', 'Ownership'].map((h) => r.indexOf(`\n## ${h}`));
   assert.ok(order.every((i) => i > 0), order.join());
