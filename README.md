@@ -3,7 +3,7 @@
 Send a decision request to PingOne Authorize and see the verdict, the statements it returned, and the exact call behind it, against a built-in Mock engine or, owner-run, your own PingOne environment or on-prem PingAuthorize.
 
 Tier: Tester
-Repo: https://github.com/ping-sandbox/p1az-inspector-LAB
+Repo: https://github.com/curtismu7/p1az-inspector-LAB
 Catalog: B2 (a stand-in: the shelf catalog has no exact row for this app, and B2, "Authorize policy playground", is the nearest one. The owner assigns the real id.)
 
 ## What is simulated
@@ -17,7 +17,7 @@ Catalog: B2 (a stand-in: the shelf catalog has no exact row for this app, and B2
 Prerequisites: Node 26 or newer (`.nvmrc` says 26). Docker only for the Docker form.
 
 ```sh
-git clone https://github.com/ping-sandbox/p1az-inspector-LAB.git
+git clone https://github.com/curtismu7/p1az-inspector-LAB.git
 cd p1az-inspector-LAB
 npm ci
 npm run build        # builds web/dist, which the server serves
