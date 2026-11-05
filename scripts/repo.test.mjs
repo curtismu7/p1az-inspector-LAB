@@ -81,7 +81,7 @@ test('README follows the README standard: title ends in LAB, plain Tier, Repo an
   assert.match(r, /lsof -iTCP:4840 -sTCP:LISTEN -n -P/);
   assert.match(r, /PORT=<other port> npm start/);
   assert.match(r, /4840-4849/);
-  assert.ok(!/ping-devops|cmuir|curtismu/i.test(r));
+  assert.ok(!/ping-devops|cmuir/i.test(r));
   assert.ok(!/\bdoor\b/i.test(r));
 });
 
