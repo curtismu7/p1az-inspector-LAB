@@ -649,3 +649,32 @@ test('a Save with nothing changed does not pin the shared environment, region or
   assert.equal(s.publicView().connection, 'onprem');
   assert.throws(() => s.update({ region: 'mars' }), /region must be one of/);
 });
+
+// Rule 19: the Mock/Real toggle.
+test('the mode toggle: /api/info, switch both ways, and the evaluate mode follows the server mode', async () => {
+  const t = await boot();
+  try {
+    const info = await t.req('GET', '/api/info');
+    assert.equal(info.status, 200);
+    assert.equal(info.body.source, 'mock');
+    assert.equal(info.body.realAvailable, false);
+    assert.match(info.body.realReason, /live settings are incomplete/);
+    assert.equal((await t.req('POST', '/api/mode', { source: 'real' })).status, 409, 'Real is refused while settings are incomplete');
+    await t.settings.update({ environmentId: ENV_ID, clientId: 'client', clientSecret: SECRET });
+    assert.equal((await t.req('POST', '/api/mode', { source: 'real' })).body.source, 'real');
+    const d = await t.req('POST', '/api/evaluate', { mode: 'live', preset: 'transaction', parameters: { Amount: 100, TransactionType: 'deposit' } });
+    assert.equal(d.status, 400, 'live evaluate still needs an endpoint, but the mode is the server mode now');
+    const toMock = await t.req('POST', '/api/mode', { source: 'mock' });
+    assert.equal(toMock.body.source, 'mock');
+    assert.equal((await t.req('GET', '/api/info')).body.source, 'mock');
+  } finally { await t.close(); }
+});
+
+test('the mode toggle refuses a bad body with the documented shape', async () => {
+  const t = await boot();
+  try {
+    assert.equal((await t.req('POST', '/api/mode', { source: 'live' })).status, 400);
+    assert.equal((await t.req('POST', '/api/mode', { mode: 'mock' })).status, 400);
+    assert.equal((await t.req('POST', '/api/mode', {})).status, 400);
+  } finally { await t.close(); }
+});

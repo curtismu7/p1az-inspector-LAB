@@ -70,6 +70,20 @@ export function createApp({
 
   api.get('/config', (_req, res) => res.json({ modes: ['mock', 'live'], liveConfigured: settings.configured(), rules: mock.RULES }));
 
+  // Rule 19: the Mock/Real toggle. POST /api/mode takes exactly { source: 'mock' | 'real' }.
+  const modeView = () => ({
+    source: settings.mode() === 'live' ? 'real' : 'mock',
+    realAvailable: settings.configured(),
+    realReason: settings.configured() ? null : 'Real (live) is not available: the live settings are incomplete. Save your PingOne environment (or an on-prem PingAuthorize URL) on the Settings page.',
+  });
+  api.get('/info', (_req, res) => res.json(modeView()));
+  api.post('/mode', small, (req, res) => {
+    if (!isObject(req.body) || (req.body.source !== 'mock' && req.body.source !== 'real')) return bad(res, 'source must be exactly "mock" or "real"');
+    if (req.body.source === 'real' && !settings.configured()) return bad(res, modeView().realReason, 409, 'real_not_available');
+    settings.setMode(req.body.source === 'real' ? 'live' : 'mock');
+    res.json(modeView());
+  });
+
   // Rule 17: the "How it fits" diagram is diagram-studio/1 data, served by name. An unknown name is a JSON 404 that does not echo it.
   api.get('/diagrams/:name', (req, res) => {
     const doc = diagrams.get(req.params.name);

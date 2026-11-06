@@ -76,11 +76,16 @@ export function createSettings({ dir, env = process.env }) {
     return merged;
   };
   const configured = () => { const s = load(); return s.connection === 'onprem' ? Boolean(s.onpremUrl) : Boolean(s.environmentId && s.clientId && s.clientSecret); };
+  // Rule 19: the server-side Mock/Real mode, persisted in the app's own file.
+  const readMode = () => (readJson(ownFile).mode === 'live' ? 'live' : 'mock');
+  const setMode = (m) => { const own = readJson(ownFile); own.mode = m; writeJson(ownFile, own); };
   return {
     ownFile,
     sharedFile,
     get: load,
     configured,
+    mode: readMode,
+    setMode,
     // The secret, plus the base64 form of "clientId:secret" that goes in the Basic header (an upstream error can echo that header).
     secrets: () => {
       const s = load();

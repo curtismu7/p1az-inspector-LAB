@@ -21,8 +21,10 @@ export function bannerText(mode, liveConfigured) {
 }
 
 export default function App() {
-  const [mode, setModeState] = useState(() => (store.read("p1az.mode") === "live" ? "live" : "mock"));
+  const [mode, setModeState] = useState("mock");
   const [liveConfigured, setLiveConfigured] = useState(null); // null = not known yet
+  const [modeInfo, setModeInfo] = useState(null);
+  const [switching, setSwitching] = useState(false);
   const [page, setPage] = useState(() => (PAGES.some(([id]) => id === window.location.hash.slice(1)) ? window.location.hash.slice(1) : "console"));
   const [theme, setTheme] = useState(() => store.read("p1az-theme") || "system");
   const [presenter, setPresenter] = useState(false);
@@ -31,7 +33,24 @@ export default function App() {
 
   const loadConfig = useCallback(() => { get("/api/config").then((r) => setLiveConfigured(r.ok ? Boolean(r.data.liveConfigured) : false)); }, []);
   useEffect(() => { loadConfig(); }, [loadConfig]);
-  const setMode = (m) => { setModeState(m); store.write("p1az.mode", m); };
+  // Rule 19: the Mock/Real toggle is server-side. /api/info is fetched once and after every switch; switching reloads the pages.
+  const loadInfo = useCallback(() => {
+    get("/api/info").then((r) => {
+      if (r.ok) { setModeInfo(r.data); setModeState(r.data.source === "real" ? "live" : "mock"); }
+    }).catch(() => {});
+  }, []);
+  useEffect(() => { loadInfo(); }, [loadInfo]);
+  const setMode = async (m) => {
+    if (switching || m === mode) return;
+    if (m === "live" && modeInfo?.realAvailable === false) return; // Real is disabled with the reason; the button is too
+    setSwitching(true);
+    const r = await post("/api/mode", { source: m === "live" ? "real" : "mock" });
+    setSwitching(false);
+    if (!r.ok) { setResetNote(`Could not switch modes: ${r.data?.message || r.data?.error || "unknown error"}`); return; }
+    setModeState(m);
+    loadInfo();
+    setEpoch((n) => n + 1); // remount the pages, so every page reloads its data for the new mode
+  };
 
   const reset = async () => {
     const r = await post("/api/reset");
@@ -71,9 +90,11 @@ export default function App() {
           <h1 className="head__title">P1AZ Inspector LAB</h1>
           <div className="head__tools">
             <ShelfLink />
-            <div className="seg" role="group" aria-label="Mode">
-              <button type="button" aria-pressed={mode === "mock"} onClick={() => setMode("mock")} data-testid="mode-mock">Mock</button>
-              <button type="button" aria-pressed={mode === "live"} onClick={() => setMode("live")} data-testid="mode-live">Live</button>
+            <div className="seg mode-toggle" role="group" aria-label="Mock or real PingOne Authorize">
+              <button type="button" aria-pressed={mode === "mock"} disabled={switching} onClick={() => setMode("mock")} data-testid="mode-mock">Mock</button>
+              <button type="button" aria-pressed={mode === "live"} disabled={switching || modeInfo?.realAvailable === false}
+                title={modeInfo?.realAvailable === false && modeInfo?.realReason ? modeInfo.realReason : undefined}
+                onClick={() => setMode("live")} data-testid="mode-live">Live</button>
             </div>
             <span className="chip" data-testid="mode">Mode: {mode}</span>
             {!presenter && (
