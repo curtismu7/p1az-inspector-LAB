@@ -14,7 +14,7 @@ import { createHealth } from './health.js';
 import { createLive } from './live.js';
 import * as mock from './mockEngine.js';
 import { clip, scrub, scrubJson } from './redact.js';
-import { hostCheck, sameOriginWrites } from './security.js';
+import { hostCheck, labAllowedHosts, sameOriginWrites } from './security.js';
 import { createSettings } from './settings.js';
 import { shelfInfo } from './shelfLink.js';
 
@@ -45,7 +45,8 @@ const mockParamsOk = (p) => {
 };
 
 export function createApp({
-  env = process.env, settings = createSettings({ dir: dataDir(env), env }),
+  env = process.env, lab = labAllowedHosts(env), // validated first: a bad LAB_ALLOWED_HOSTS must throw before the health timer starts
+  settings = createSettings({ dir: dataDir(env), env }),
   live = createLive({ settings }), health = createHealth({ env }), diagrams = createDiagrams(),
 } = {}) {
   const calls = []; // the call log is the only server-side session state (memory only)
@@ -62,7 +63,7 @@ export function createApp({
 
   const api = express.Router();
   const small = express.json({ limit: '256kb' });
-  api.use(sameOriginWrites());
+  api.use(sameOriginWrites(lab));
   api.use('/health', health.router);
   api.use((_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
   const secrets = () => [...settings.secrets(), ...live.secrets()];

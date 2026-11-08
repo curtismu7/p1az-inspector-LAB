@@ -5,7 +5,7 @@ import { readSharedDefaults, sharedEnvPath } from './settings.js';
 import { dataDir } from './config.js';
 import { DIAGRAM_DIR, loadDiagrams } from './diagramData.js';
 import { isActive } from './netguard.js';
-import { allowedHostNames, assertBindAllowed, bindHost } from './security.js';
+import { allowedHostNames, assertBindAllowed, bindHost, labAllowedHosts } from './security.js';
 
 export function runChecks({ env = process.env, nodeVersion = process.versions.node, diagramDir = DIAGRAM_DIR } = {}) {
   const checks = [];
@@ -18,6 +18,10 @@ export function runChecks({ env = process.env, nodeVersion = process.versions.no
     const host = assertBindAllowed(bindHost(env), env);
     add('bind', 'pass', env.P1AZ_BIND ? `${host} (P1AZ_BIND opt-in; also accepts ${allowedHostNames(env).length} extra Host name(s))` : `${host} (loopback)`);
   } catch (e) { add('bind', 'fail', e.message); }
+  try {
+    const n = labAllowedHosts(env).size;
+    add('lab-hosts', 'pass', n ? `LAB_ALLOWED_HOSTS: ${n} extra Host name(s) (the lab-proxy)` : 'LAB_ALLOWED_HOSTS unset: loopback Host headers only');
+  } catch (e) { add('lab-hosts', 'fail', e.message); }
 
   // Rule 1: zero real outbound by default. The guard is installed when the server starts; Live calls get a per-host permit.
   add('netguard', isActive() ? 'pass' : 'info', isActive() ? 'active: every non-loopback connection is refused unless a Live call holds a permit for the host it is calling' : 'installs when the server starts (npm start); run `npm test` for its self-test');
