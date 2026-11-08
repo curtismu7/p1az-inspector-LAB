@@ -10,7 +10,7 @@ services:
     ports:
       - "127.0.0.1:${HOST_PORT:-4840}:4840"
     environment:
-      SHELF_URL: ${SHELF_URL:-}
+      SHELF_URL: ${SHELF_URL:-http://127.0.0.1:4400}
       PORT: "4840"
     volumes:
       - p1az-inspector-lab-data:/data
