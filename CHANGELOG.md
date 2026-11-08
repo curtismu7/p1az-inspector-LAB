@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.2.0 (unreleased): brought to the -LAB standard
+- Answer the lab-proxy host name (fixes `bad_host` behind the family lab-proxy): `LAB_ALLOWED_HOSTS` (comma separated host names, loopback always works, unset = loopback only, a bad name refuses to start before the health timer starts and in the doctor) is added to the Host allowlist next to `P1AZ_ALLOWED_HOSTS`, which is unchanged. A write whose `Origin` equals the proxy's `X-Forwarded-Proto://X-Forwarded-Host` is accepted only when `Host` is a `LAB_ALLOWED_HOSTS` name. Compose defaults it to this app's proxy name.
 - New repo `p1az-inspector-LAB` with a clean single-commit history, exported from the previous repo's main (no history carried over).
 - Header **Mock / Live** toggle on every page with the mode shown and a banner that says the same mode (was a Mock | Real P1AZ control on the Console only). "Real P1AZ" is now "Live". Live stays refused until set up.
 - Settings: `~/Development/.env` (read only, four keys: `PINGONE_ENVIRONMENT_ID`, `PINGONE_REGION`, `PINGONE_CLIENT_ID`, `PINGONE_CLIENT_SECRET`) as defaults; values saved on the Settings page win, and the worker client ID and secret are taken as one unit. The secret stays write-only. The shared `~/.config/demo-kit/pingone.json` is no longer read or written, and no per-app `.env` is loaded. The shared file applies to host runs only (Docker reads no host files). A Save with no changes does not pin shared values into the app's own file. The Basic-header form of the client is scrubbed from responses like the secret.

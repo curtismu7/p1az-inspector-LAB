@@ -12,6 +12,7 @@ services:
     environment:
       SHELF_URL: ${SHELF_URL:-http://127.0.0.1:4400}
       PORT: "4840"
+      LAB_ALLOWED_HOSTS: ${LAB_ALLOWED_HOSTS:-p1az-inspector.local.ping-devops.com}
     volumes:
       - p1az-inspector-lab-data:/data
     read_only: true
