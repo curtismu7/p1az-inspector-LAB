@@ -50,10 +50,12 @@ try {
   await page.screenshot({ path: path.join(shots, 'console-mock.png') });
 
   check((await page.getByTestId('banner').innerText()).startsWith('MOCK mode'), 'Mock: the banner says MOCK');
-  await page.getByRole('button', { name: 'Live' }).click();
-  await page.getByText(/^LIVE mode, not set up\./).waitFor();
-  check((await page.getByTestId('mode').innerText()) === 'Mode: live', 'Live: the header shows the mode');
-  check(await page.getByRole('button', { name: 'Send' }).isDisabled(), 'Live: Send is blocked until Settings is filled in');
+  // The Live gate: until Settings is filled in, Live is disabled and its title says why; the page stays in Mock.
+  const live = page.getByRole('button', { name: 'Live' });
+  await page.waitForFunction(() => document.querySelector('[data-testid="mode-live"]')?.title?.length > 0);
+  check(await live.isDisabled(), 'Live: the Live button is disabled until Settings is filled in');
+  check(/live settings are incomplete/.test((await live.getAttribute('title')) || ''), 'Live: the disabled button says why (settings incomplete)');
+  check((await page.getByTestId('mode').innerText()) === 'Mode: mock', 'Live: the header stays in Mock');
 
   await page.getByRole('tab', { name: 'Settings' }).click();
   await page.getByLabel('Environment ID').fill('00000000-0000-4000-8000-000000000000');
@@ -64,7 +66,9 @@ try {
   check(!(await page.content()).includes(SECRET), 'Settings: the secret is not in the page after saving');
   const own = path.join(work, 'own', 'settings.json');
   check((fs.statSync(own).mode & 0o777) === 0o600, 'Settings: the settings file is owner-only (600)');
+  await live.click({ timeout: 10_000 });
   await page.getByText(/^LIVE mode, owner-run\./).waitFor();
+  check((await page.getByTestId('mode').innerText()) === 'Mode: live', 'Settings: after saving, Live can be chosen and the header shows it');
   check(true, 'Settings: after saving, the banner says Live is set up');
   await page.getByRole('button', { name: 'Mock' }).click();
   await page.screenshot({ path: path.join(shots, 'settings.png') });
