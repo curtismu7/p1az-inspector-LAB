@@ -119,7 +119,7 @@ export default function App() {
       <main id="main" tabIndex={-1} key={epoch}>
         <div role="tabpanel" aria-labelledby={`tab-${page}`}>
           {page === "console" && <Console mode={mode} goSettings={() => setPage("settings")} />}
-          {page === "settings" && <Settings onSaved={loadConfig} />}
+          {page === "settings" && <Settings onSaved={() => { loadConfig(); loadInfo(); }} />}
           {page === "diagram" && <Diagram theme={theme} />}
         </div>
       </main>
