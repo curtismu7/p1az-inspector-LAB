@@ -35,7 +35,7 @@ beforeEach(() => { localStorage.clear(); window.location.hash = ""; resetOk = tr
 describe("Reset (rule 3)", () => {
   it("is in the header and asks the server to reset, then says what it did and what it kept", async () => {
     render(<App />);
-    await userEvent.click(screen.getByRole("button", { name: "Reset session" }));
+    await userEvent.click(screen.getByTestId("reset"));
     expect(requests).toContain("POST /api/reset");
     expect(await screen.findByText(/call log cleared, diagram restored\. Saved settings kept\./)).toBeInTheDocument();
   });
@@ -43,7 +43,7 @@ describe("Reset (rule 3)", () => {
   it("says so when the server cannot be reached, instead of pretending it worked", async () => {
     resetOk = false;
     render(<App />);
-    await userEvent.click(screen.getByRole("button", { name: "Reset session" }));
+    await userEvent.click(screen.getByTestId("reset"));
     expect(await screen.findByText(/Reset failed: could not reach the server\./)).toBeInTheDocument();
   });
 
@@ -51,7 +51,7 @@ describe("Reset (rule 3)", () => {
     render(<App />);
     await userEvent.click(screen.getByRole("tab", { name: "How it fits" }));
     const before = screen.getByRole("main").firstElementChild;
-    await userEvent.click(screen.getByRole("button", { name: "Reset session" }));
+    await userEvent.click(screen.getByTestId("reset"));
     await screen.findByText(/diagram restored/);
     expect(screen.getByRole("main").firstElementChild).not.toBe(before);
   });
@@ -60,7 +60,7 @@ describe("Reset (rule 3)", () => {
 describe("Mock / Live toggle and the banner (rules 1 and 2, owner 2026-10-31)", () => {
   it("opens in Mock; the header shows the mode and the banner says the same", async () => {
     render(<App />);
-    expect(screen.getByRole("button", { name: "Mock" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByTestId("mode-select")).toHaveValue("mock");
     expect(screen.getByTestId("mode")).toHaveTextContent("Mode: mock");
     expect(screen.getByTestId("banner")).toHaveTextContent(/^MOCK mode, simulated\./);
     expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "mock");
@@ -69,9 +69,7 @@ describe("Mock / Live toggle and the banner (rules 1 and 2, owner 2026-10-31)", 
   it("Live, not set up: the toggle refuses (409) and the mode stays mock", async () => {
     render(<App />);
     await screen.findByText(/^MOCK mode/);
-    expect(screen.getByRole("button", { name: "Live" })).toBeDisabled(); // Real is unavailable, so the button is off
-    expect(screen.getByRole("button", { name: "Live" })).toHaveAttribute("title", "incomplete"); // with the how-to tooltip
-    await userEvent.click(screen.getByRole("button", { name: "Live" }));
+    await userEvent.selectOptions(screen.getByTestId("mode-select"), "real"); // the switch asks the server, which refuses
     expect(screen.getByTestId("mode")).toHaveTextContent("Mode: mock");
     expect(screen.getByTestId("banner")).toHaveTextContent(/^MOCK mode/);
     expect(requests.some((r) => r.startsWith("POST /api/mode"))).toBe(false);
@@ -80,9 +78,9 @@ describe("Mock / Live toggle and the banner (rules 1 and 2, owner 2026-10-31)", 
   it("Live, set up: switching goes through the server, the banner follows, and pages reload", async () => {
     liveConfigured = true;
     render(<App />);
-    await userEvent.click(screen.getByRole("button", { name: "Live" }));
-    expect(screen.getByTestId("mode")).toHaveTextContent("Mode: live");
+    await userEvent.selectOptions(screen.getByTestId("mode-select"), "real");
     expect(await screen.findByText(/^LIVE mode, owner-run\./)).toBeInTheDocument();
+    expect(screen.getByTestId("mode")).toHaveTextContent("Mode: live");
     // Cloud Live reaches two PingOne hosts in turn (token, then API), so the banner must not claim "the one" host.
     expect(screen.getByTestId("banner")).toHaveTextContent(/only to the PingOne hosts for your region, or the PingAuthorize URL you set up on Settings/);
     expect(screen.getByTestId("banner")).not.toHaveTextContent(/the one PingOne environment/);
@@ -92,7 +90,7 @@ describe("Mock / Live toggle and the banner (rules 1 and 2, owner 2026-10-31)", 
     render(<App />);
     for (const name of ["Console", "Settings", "How it fits"]) {
       await userEvent.click(screen.getByRole("tab", { name }));
-      expect(screen.getByRole("button", { name: "Live" })).toBeInTheDocument();
+      expect(screen.getByTestId("mode-select")).toBeInTheDocument();
       expect(screen.getByTestId("mode")).toBeInTheDocument();
       expect(screen.getByTestId("banner")).toHaveTextContent(/MOCK mode/);
     }
@@ -101,9 +99,9 @@ describe("Mock / Live toggle and the banner (rules 1 and 2, owner 2026-10-31)", 
   it("presenter mode (P, Esc) keeps the banner and the toggle", async () => {
     render(<App />);
     await userEvent.keyboard("p");
-    expect(screen.getByTestId("presenter")).toHaveTextContent("Exit presenter");
+    expect(screen.getByTestId("presenter")).toHaveTextContent("Exit present (Esc)");
     expect(screen.getByTestId("banner")).toBeVisible();
-    expect(screen.getByRole("button", { name: "Live" })).toBeInTheDocument();
+    expect(screen.getByTestId("mode-select")).toBeInTheDocument();
     await userEvent.keyboard("{Escape}");
     expect(screen.getByTestId("presenter")).toHaveTextContent("Presenter (P)");
   });

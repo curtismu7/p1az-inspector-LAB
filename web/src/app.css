@@ -4,9 +4,10 @@
 .app { max-width: min(100%, 1280px); margin: 0 auto; padding: 0 0 32px; }
 .skip { position: absolute; left: -999px; top: 0; padding: 8px 16px; background: var(--surface); color: var(--text); border: 2px solid var(--accent); z-index: 50; }
 .skip:focus { left: 8px; top: 8px; }
-.head { display: flex; gap: 8px 16px; justify-content: space-between; align-items: center; padding: 12px 0 8px; flex-wrap: wrap; }
+.head { display: flex; gap: 8px 16px; justify-content: space-between; align-items: center; padding: 12px 0 8px; flex-wrap: wrap; position: relative; }
 .head__title { margin: 0; font-size: 22px; }
 .head__tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+html { font-size: var(--fs, 16px); }
 .chip { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font-size: 12px; font-weight: 600; }
 .seg { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .inline { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }

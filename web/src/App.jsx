@@ -1,9 +1,13 @@
 import React, { useCallback, useEffect, useState } from "react";
+import fs from "node:fs";
 import ShelfLink from "./components/ShelfLink.jsx";
 import Console from "./pages/Console.jsx";
 import Diagram from "./pages/Diagram.jsx";
 import Settings from "./pages/Settings.jsx";
+import TopMenu, { applyFontSize } from "./top-menu/TopMenu.jsx";
 import { get, post } from "./lib/api.js";
+
+const VERSION = (() => { try { return JSON.parse(fs.readFileSync(new URL("../../package.json", import.meta.url), "utf8")).version || null; } catch { return null; } })();
 
 const PAGES = [["console", "Console"], ["settings", "Settings"], ["diagram", "How it fits"]];
 const store = {
@@ -27,6 +31,8 @@ export default function App() {
   const [switching, setSwitching] = useState(false);
   const [page, setPage] = useState(() => (PAGES.some(([id]) => id === window.location.hash.slice(1)) ? window.location.hash.slice(1) : "console"));
   const [theme, setTheme] = useState(() => store.read("p1az-theme") || "system");
+  const [fontStep, setFontStep] = useState(() => { const f = store.read("p1az.font"); return ["S", "M", "L"].includes(f) ? f : "M"; });
+  useEffect(() => { applyFontSize(fontStep); store.write("p1az.font", fontStep); }, [fontStep]);
   const [presenter, setPresenter] = useState(false);
   const [epoch, setEpoch] = useState(0); // bumped by Reset: remounts the pages, so the diagram boxes and form fields start over
   const [resetNote, setResetNote] = useState("");
@@ -41,13 +47,14 @@ export default function App() {
   }, []);
   useEffect(() => { loadInfo(); }, [loadInfo]);
   const setMode = async (m) => {
-    if (switching || m === mode) return;
-    if (m === "live" && modeInfo?.realAvailable === false) return; // Real is disabled with the reason; the button is too
+    const target = m === "real" ? "live" : m;
+    if (switching || target === mode) return;
+    if (target === "live" && modeInfo?.realAvailable === false) return; // Real is disabled with the reason; the button is too
     setSwitching(true);
-    const r = await post("/api/mode", { source: m === "live" ? "real" : "mock" });
+    const r = await post("/api/mode", { source: target === "live" ? "real" : "mock" });
     setSwitching(false);
     if (!r.ok) { setResetNote(`Could not switch modes: ${r.data?.message || r.data?.error || "unknown error"}`); return; }
-    setModeState(m);
+    setModeState(target);
     loadInfo();
     setEpoch((n) => n + 1); // remount the pages, so every page reloads its data for the new mode
   };
@@ -89,23 +96,19 @@ export default function App() {
         <div className="head">
           <h1 className="head__title">P1AZ Inspector LAB</h1>
           <div className="head__tools">
-            <ShelfLink />
-            <div className="seg mode-toggle" role="group" aria-label="Mock or real PingOne Authorize">
-              <button type="button" aria-pressed={mode === "mock"} disabled={switching} onClick={() => setMode("mock")} data-testid="mode-mock">Mock</button>
-              <button type="button" aria-pressed={mode === "live"} disabled={switching || modeInfo?.realAvailable === false}
-                title={modeInfo?.realAvailable === false && modeInfo?.realReason ? modeInfo.realReason : undefined}
-                onClick={() => setMode("live")} data-testid="mode-live">Live</button>
-            </div>
-            <span className="chip" data-testid="mode">Mode: {mode}</span>
-            {!presenter && (
-              <label className="inline">Theme{" "}
-                <select value={theme} onChange={(e) => setTheme(e.target.value)} data-testid="theme">
-                  <option value="system">Auto</option><option value="light">Light</option><option value="dark">Dark</option>
-                </select>
-              </label>
-            )}
-            <button type="button" onClick={reset} data-testid="reset">Reset session</button>
-            <button type="button" aria-pressed={presenter} onClick={() => setPresenter((v) => !v)} data-testid="presenter">{presenter ? "Exit presenter (Esc)" : "Presenter (P)"}</button>
+            <TopMenu
+              mode={{ value: mode === "live" ? "real" : "mock", onChange: setMode, realAvailable: modeInfo ? modeInfo.realAvailable : null, realHint: modeInfo?.realReason }}
+              theme={{ value: theme, onChange: setTheme }}
+              fontSize={{ value: fontStep, onChange: setFontStep }}
+              present={{ active: presenter, onToggle: () => setPresenter((v) => !v), label: "Presenter (P)" }}
+              shelfUrl="https://local.ping-devops.com:8443/"
+              help={{ href: "https://github.com/curtismu7/p1az-inspector-LAB#readme" }}
+              version={VERSION}
+              onReset={reset}
+            >
+              <span className="chip" data-testid="mode">Mode: {mode}</span>
+              <ShelfLink />
+            </TopMenu>
           </div>
         </div>
       </header>
