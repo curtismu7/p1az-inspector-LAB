@@ -51,10 +51,11 @@ try {
 
   check((await page.getByTestId('banner').innerText()).startsWith('MOCK mode'), 'Mock: the banner says MOCK');
   // The Live gate: until Settings is filled in, Live is disabled and its title says why; the page stays in Mock.
-  const live = page.getByRole('button', { name: 'Live' });
-  await page.waitForFunction(() => document.querySelector('[data-testid="mode-live"]')?.title?.length > 0);
-  check(await live.isDisabled(), 'Live: the Live button is disabled until Settings is filled in');
-  check(/live settings are incomplete/.test((await live.getAttribute('title')) || ''), 'Live: the disabled button says why (settings incomplete)');
+  // The shared TopMenu: Live (Real) is a disabled option whose title says why, until Settings is filled in.
+  const live = page.getByTestId('mode-real');
+  await page.waitForFunction(() => document.querySelector('[data-testid="mode-real"]')?.title?.length > 0);
+  check((await live.evaluate((o) => o.disabled)) === true, 'Live: the Live option is disabled until Settings is filled in');
+  check(/live settings are incomplete/.test((await live.getAttribute('title')) || ''), 'Live: the disabled option says why (settings incomplete)');
   check((await page.getByTestId('mode').innerText()) === 'Mode: mock', 'Live: the header stays in Mock');
 
   await page.getByRole('tab', { name: 'Settings' }).click();
@@ -66,19 +67,19 @@ try {
   check(!(await page.content()).includes(SECRET), 'Settings: the secret is not in the page after saving');
   const own = path.join(work, 'own', 'settings.json');
   check((fs.statSync(own).mode & 0o777) === 0o600, 'Settings: the settings file is owner-only (600)');
-  await live.click({ timeout: 10_000 });
+  await page.getByTestId('mode-select').selectOption('real');
   await page.getByText(/^LIVE mode, owner-run\./).waitFor();
   check((await page.getByTestId('mode').innerText()) === 'Mode: live', 'Settings: after saving, Live can be chosen and the header shows it');
   check(true, 'Settings: after saving, the banner says Live is set up');
-  await page.getByRole('button', { name: 'Mock' }).click();
+  await page.getByTestId('mode-select').selectOption('mock');
   await page.screenshot({ path: path.join(shots, 'settings.png') });
 
   await page.getByRole('tab', { name: 'How it fits' }).click();
   await page.getByRole('button', { name: 'Simulate' }).click();
   await page.getByTestId('caption').getByText(/Step 1/).waitFor();
   check(true, 'Diagram: Simulate shows a captioned step');
-  // exact: the header also has "Reset session", which would match a substring.
-  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  // The diagram's own Reset inside main (the shared TopMenu's Reset is in the header).
+  await page.locator('#main').getByRole('button', { name: 'Reset' }).click();
   check((await page.getByTestId('caption').innerText()).includes('Press Simulate'), 'Diagram: Reset clears it');
   await page.screenshot({ path: path.join(shots, 'diagram.png') });
 
@@ -87,7 +88,7 @@ try {
   await page.getByText('Calls this session').waitFor();
   await page.getByText('No calls yet. Press Send.').waitFor({ state: 'detached' }); // the list loads after the page mounts
   check(true, 'Reset session: the Console has calls before it');
-  await page.getByRole('button', { name: 'Reset session' }).click();
+  await page.getByTestId('reset').click(); // the shared TopMenu's Reset (its confirm text still appears)
   await page.getByText('No calls yet. Press Send.').waitFor();
   check(true, 'Reset session: the call log is empty afterwards');
   check((await (await fetch(`${base}api/calls`)).json()).calls.length === 0, 'Reset session: the server log is empty too');
