@@ -177,8 +177,9 @@ export function Json({ value, label, testId, toggle = true, hot }) {
   const fromText = typeof value === "string" ? parseJsonText(value) : undefined;
   const data = fromText !== undefined ? fromText : value;
   const isJson = typeof data === "object" && data !== null;
-  // a one-line JSON string is laid out for reading; a string that already has line breaks is shown as it came
-  const text = fromText !== undefined ? (value.includes("\n") ? value : JSON.stringify(fromText, null, 2)) : isJson ? JSON.stringify(data, null, 2) : typeof value === "string" ? value : JSON.stringify(value);
+  // A string is shown EXACTLY as given in the JSON view (a hashed or signed payload must not be re-serialized: key order, number text, spacing).
+  // The Form view reads the parsed value. Only a value that is an object or array is laid out with JSON.stringify.
+  const text = typeof value === "string" ? value : isJson ? JSON.stringify(data, null, 2) : JSON.stringify(value);
   const asForm = isJson && mode === "form";
   return (
     <div className="jsonbox" data-testid={testId ? `${testId}-box` : undefined} data-view={isJson ? mode : "text"}>
