@@ -39,6 +39,21 @@ describe("Console", () => {
     expect(calls.find((c) => c.key === "POST /api/evaluate").body.mode).toBe("mock");
   });
 
+  it("shows the request and the response through the shared JsonPane: Form | JSON toggle, full view", async () => {
+    render(<Console goSettings={() => {}} />);
+    await userEvent.click(screen.getByRole("button", { name: "Send" }));
+    const req = await screen.findByTestId("call-request");
+    const res = screen.getByTestId("call-response");
+    expect(screen.getAllByRole("button", { name: "Form" })).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: "JSON" })).toHaveLength(2);
+    expect(req).toHaveTextContent("Amount");
+    expect(res).toHaveTextContent("DENY");
+    await userEvent.click(screen.getAllByRole("button", { name: "JSON" })[0]);
+    expect(screen.getByTestId("call-request").tagName).toBe("PRE");
+    expect(screen.getByTestId("call-request").textContent).toContain('"Amount": 500');
+    expect(screen.getByTestId("call-request").querySelector(".jtok--hot")).not.toBeNull();
+  });
+
   it("Live is blocked until Settings is filled in, and offers the way there", async () => {
     const goSettings = vi.fn();
     render(<Console mode="live" goSettings={goSettings} />);
