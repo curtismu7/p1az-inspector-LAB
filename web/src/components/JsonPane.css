@@ -8,8 +8,10 @@
 /* ===== JSON pane (owner 2026-11-14): Form = a form, JSON = coloured by what each part is. Colours come from the theme tokens only. ===== */
 .json, .facts, .http { --j-key: var(--status-info); --j-string: var(--status-ok); --j-number: color-mix(in srgb, var(--status-warn) 50%, var(--danger-text)); --j-bool: var(--status-warn); --j-null: var(--muted); --j-punct: var(--muted); --j-url: color-mix(in srgb, var(--status-info) 55%, var(--status-ok)); --j-id: color-mix(in srgb, var(--status-ok) 60%, var(--text)); --j-time: color-mix(in srgb, var(--status-warn) 55%, var(--text)); --j-hot-bg: var(--accent-soft); }
 /* FULL VIEW (owner 2026-11-14, Rule 24): a JSON pane is never a scroll box. It grows to its content, long lines and tokens wrap, and a lab's own
-   max-height / overflow can not cap it (the check script also fails such a rule in the lab's CSS). */
-.jsonbox, .jsonbox .json { max-height: none !important; height: auto !important; overflow: visible !important; }
+   max-height / overflow does not cap it (done with selector specificity, not a forced override, because the family CSS check forbids those; the J1 check fails such a rule in the lab's CSS). */
+.jsonbox, .jsonbox .json.json { max-height: none; height: auto; overflow: visible; }
+.jwire { display: grid; gap: 4px; min-width: 0; }
+.jwire > .json.json--wirehead { max-height: none; height: auto; overflow: visible; margin: 0; }
 .json--raw { color: var(--text-body); white-space: pre-wrap; overflow-wrap: anywhere; }
 .jtok--key { color: var(--j-key); font-weight: 600; }
 .jtok--string { color: var(--j-string); }
@@ -32,6 +34,7 @@
 .jform__row { display: grid; grid-template-columns: minmax(84px, 28%) minmax(0, 1fr); gap: 4px 10px; align-items: start; }
 .jform__k { margin: 0; padding-top: 3px; font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--j-key); overflow-wrap: anywhere; }
 .jform__d { margin: 0; min-width: 0; }
+.jform__row[data-nested="true"] { grid-template-columns: minmax(0, 1fr); }
 .jform__v { display: block; padding: 2px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font-family: var(--font-mono); font-size: 12px; overflow-wrap: anywhere; }
 .jform__v--string { color: var(--j-string); }
 .jform__v--number { color: var(--j-number); }
