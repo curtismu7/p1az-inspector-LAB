@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Engine, Failed, Verdict } from "../components/Verdict.jsx";
-import { del, get, post, pretty } from "../lib/api.js";
+import Json from "../components/JsonPane.jsx";
+import { del, get, post } from "../lib/api.js";
 
 // The decision console: send one set of Trust Framework parameters to the Mock engine or to a live PingOne Authorize / PingAuthorize,
 // from the same page and in the same shape. The Mock / Live choice lives in the header (App), so every page shows it; the Console reads it.
@@ -128,6 +129,10 @@ export default function Console({ mode = "mock", goSettings }) {
   );
 }
 
+// Keys that matter in this lab's payloads: what the policy decides on (request) and what it hands back to act on (response). `decision` is already in the alert colour.
+const REQUEST_HOT = ["Amount", "TransactionType", "Acr", "ToolName", "HitlApproved"];
+const RESPONSE_HOT = ["obligations", "statements"];
+
 function Detail({ call }) {
   return (
     <div className="panel">
@@ -135,8 +140,8 @@ function Detail({ call }) {
       {!call.ok && <p className="alert">{call.message}</p>}
       {call.ok && <p className="muted">{call.ms} ms{call.decisionId ? <> · decision <code>{call.decisionId}</code></> : null}{call.endpointId ? <> · endpoint <code>{call.endpointId}</code></> : null}</p>}
       {call.statements?.length > 0 && <><h4>Statements</h4><ul className="stmts">{call.statements.map((s, i) => <li key={i}><strong>{s.name || s.code}</strong>{s.statement ? `: ${s.statement}` : ""}</li>)}</ul></>}
-      <h4>Request</h4><pre className="json">{pretty(call.request || { parameters: call.input })}</pre>
-      {call.raw && <><h4>Response</h4><pre className="json">{pretty(call.raw)}</pre></>}
+      <h4>Request</h4><Json value={call.request || { parameters: call.input }} label="Request" testId="call-request" hot={REQUEST_HOT} />
+      {call.raw && <><h4>Response</h4><Json value={call.raw} label="Response" testId="call-response" hot={RESPONSE_HOT} /></>}
     </div>
   );
 }

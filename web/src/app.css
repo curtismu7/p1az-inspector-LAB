@@ -51,7 +51,7 @@ input[type="checkbox"] { width: 20px; height: 20px; min-height: 0; accent-color:
 .calls__item { width: 100%; text-align: left; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-weight: 400; }
 .calls__item[aria-current="true"] { border: 2px solid var(--accent); }
 .stmts { padding-left: 18px; margin: 4px 0 12px; }
-.json { margin: 4px 0 12px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); color: var(--text); font-size: 12px; overflow: auto; max-height: 288px; }
+.json { margin: 4px 0 12px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); color: var(--text); font-size: 12px; }
 
 .flow { height: min(480px, 70vh); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
 .flow__caption { min-height: 48px; margin: 12px 0 0; padding: 10px 12px; border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 8px; background: var(--surface); color: var(--text); }
