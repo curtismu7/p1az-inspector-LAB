@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import fs from "node:fs";
 import ShelfLink from "./components/ShelfLink.jsx";
+import VerifyMark from "./components/VerifyMark.jsx";
 import Console from "./pages/Console.jsx";
 import Diagram from "./pages/Diagram.jsx";
 import Settings from "./pages/Settings.jsx";
@@ -108,6 +109,7 @@ export default function App() {
             >
               <span className="chip" data-testid="mode">Mode: {mode}</span>
               <ShelfLink />
+              <VerifyMark id="p1az-inspector" />
             </TopMenu>
           </div>
         </div>
