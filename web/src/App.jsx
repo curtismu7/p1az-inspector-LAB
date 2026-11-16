@@ -82,52 +82,44 @@ export default function App() {
     return () => window.removeEventListener("keydown", on);
   }, []);
 
-  const onKeyTab = (e, i) => {
-    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-    const next = PAGES[(i + (e.key === "ArrowRight" ? 1 : PAGES.length - 1)) % PAGES.length];
-    setPage(next[0]);
-    document.getElementById(`tab-${next[0]}`)?.focus();
-  };
-
   return (
     <div className={`app${presenter ? " app--presenter" : ""}`}>
       <a className="skip" href="#main" onClick={(e) => { e.preventDefault(); document.getElementById("main")?.focus(); }}>Skip to content</a>
-      <header>
-        <p className="banner" role="note" data-state={mode === "live" ? "live" : "mock"} data-testid="banner">{bannerText(mode, liveConfigured)}</p>
-        <div className="head">
-          <h1 className="head__title">P1AZ Inspector LAB</h1>
-          <div className="head__tools">
-            <TopMenu
-              mode={{ value: mode === "live" ? "real" : "mock", onChange: setMode, realAvailable: modeInfo ? modeInfo.realAvailable : null, realHint: modeInfo?.realReason }}
-              theme={{ value: theme, onChange: setTheme }}
-              fontSize={{ value: fontStep, onChange: setFontStep }}
-              present={{ active: presenter, onToggle: () => setPresenter((v) => !v), label: "Presenter (P)" }}
-              shelfUrl="https://local.ping-devops.com:8443/"
-              help={{ href: "https://github.com/curtismu7/p1az-inspector-LAB#readme" }}
-              version={VERSION}
-              onReset={reset}
-            >
-              <span className="chip" data-testid="mode">Mode: {mode}</span>
-              <ShelfLink />
-              <VerifyMark id="p1az-inspector" />
-            </TopMenu>
-          </div>
-        </div>
+      <header className="shell-bar">
+        <span className="shell-brand">
+          <span className="shell-logo" aria-hidden="true">AZ</span>
+          <h1>P1AZ Inspector LAB</h1>
+          <span className={`shell-badge${mode === "live" ? " shell-badge--real" : ""}`} data-testid="mode">Mode: {mode}</span>
+        </span>
+        <nav className="shell-nav" aria-label="Pages">
+          {PAGES.map(([id, label]) => (
+            <a key={id} href={`#${id}`} aria-current={page === id ? "page" : undefined}
+              onClick={(e) => { e.preventDefault(); setPage(id); }}>{label}</a>
+          ))}
+        </nav>
+        <TopMenu
+          mode={{ value: mode === "live" ? "real" : "mock", onChange: setMode, realAvailable: modeInfo ? modeInfo.realAvailable : null, realHint: modeInfo?.realReason }}
+          theme={{ value: theme, onChange: setTheme }}
+          fontSize={{ value: fontStep, onChange: setFontStep }}
+          present={{ active: presenter, onToggle: () => setPresenter((v) => !v), label: "Presenter (P)" }}
+          shelfUrl="https://local.ping-devops.com:8443/"
+          help={{ href: "https://github.com/curtismu7/p1az-inspector-LAB#readme" }}
+          version={VERSION}
+          onReset={reset}
+        >
+          <ShelfLink />
+          <VerifyMark id="p1az-inspector" />
+        </TopMenu>
       </header>
-      <p className="sr-only" role="status">{resetNote}</p>
-      <div role="tablist" aria-label="Pages" className="tabs">
-        {PAGES.map(([id, label], i) => (
-          <button key={id} id={`tab-${id}`} role="tab" type="button" aria-selected={page === id} tabIndex={page === id ? 0 : -1}
-            onClick={() => setPage(id)} onKeyDown={(e) => onKeyTab(e, i)}>{label}</button>
-        ))}
-      </div>
-      <main id="main" tabIndex={-1} key={epoch}>
-        <div role="tabpanel" aria-labelledby={`tab-${page}`}>
+      <main id="main" className="page" tabIndex={-1} key={epoch}>
+        <p className="banner" role="note" data-state={mode === "live" ? "live" : "mock"} data-testid="banner">{bannerText(mode, liveConfigured)}</p>
+        <div>
           {page === "console" && <Console mode={mode} goSettings={() => setPage("settings")} />}
           {page === "settings" && <Settings onSaved={() => { loadConfig(); loadInfo(); }} />}
           {page === "diagram" && <Diagram theme={theme} />}
         </div>
       </main>
+      <p className="sr-only" role="status">{resetNote}</p>
     </div>
   );
 }

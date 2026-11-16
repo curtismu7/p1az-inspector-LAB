@@ -26,7 +26,7 @@ describe("verification mark in the header", () => {
   it("shows this lab's own mark beside the Shelf link, and no other lab's", async () => {
     fakeServer({ shelfUrl: "http://shelf.example", demos: [{ id: "other-lab", verification: mark("in-progress", "In progress") }, { id: "p1az-inspector", verification: mark("verified", "Verified", { note: "Every decision run on the mock" }) }] });
     render(<App />);
-    await screen.findByRole("tablist");
+    await screen.findByRole("navigation", { name: "Pages" });
     const bar = within(screen.getByTestId("top-menu"));
     expect(await bar.findByText("Verified")).toBeInTheDocument();
     await waitFor(() => expect(document.querySelector("a.shelf-link")).not.toBeNull()); // the Shelf link answered from the same call
@@ -39,7 +39,7 @@ describe("verification mark in the header", () => {
     for (const payload of [{ shelfUrl: "http://shelf.example" }, { shelfUrl: "http://shelf.example", demos: [{ id: "p1az-inspector", verification: null }] }, { shelfUrl: "http://shelf.example", demos: [{ id: "p1az-inspector", verification: { status: "none" } }] }]) {
       fakeServer(payload);
       const { unmount } = render(<App />);
-      await screen.findByRole("tablist");
+      await screen.findByRole("navigation", { name: "Pages" });
       await waitFor(() => expect(document.querySelector("a.shelf-link")).not.toBeNull()); // the shelf answered, and still no badge
       expect(document.querySelector(".verify")).toBeNull();
       unmount();
