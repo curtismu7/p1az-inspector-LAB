@@ -49,11 +49,11 @@ describe("Reset (rule 3)", () => {
 
   it("remounts the page, so the diagram boxes (held in page state) start over", async () => {
     render(<App />);
-    await userEvent.click(screen.getByRole("tab", { name: "How it fits" }));
-    const before = screen.getByRole("main").firstElementChild;
+    await userEvent.click(screen.getByRole("link", { name: "How it fits" }));
+    const before = screen.getByRole("main").lastElementChild; // the page view, after the banner
     await userEvent.click(screen.getByTestId("reset"));
     await screen.findByText(/diagram restored/);
-    expect(screen.getByRole("main").firstElementChild).not.toBe(before);
+    expect(screen.getByRole("main").lastElementChild).not.toBe(before);
   });
 });
 
@@ -89,7 +89,7 @@ describe("Mock / Live toggle and the banner (rules 1 and 2, owner 2026-10-31)", 
   it("the toggle, the mode and the banner are on every page (Console, Settings, How it fits)", async () => {
     render(<App />);
     for (const name of ["Console", "Settings", "How it fits"]) {
-      await userEvent.click(screen.getByRole("tab", { name }));
+      await userEvent.click(screen.getByRole("link", { name }));
       expect(screen.getByTestId("mode-select")).toBeInTheDocument();
       expect(screen.getByTestId("mode")).toBeInTheDocument();
       expect(screen.getByTestId("banner")).toHaveTextContent(/MOCK mode/);
@@ -112,5 +112,23 @@ describe("Mock / Live toggle and the banner (rules 1 and 2, owner 2026-10-31)", 
     expect(bannerText("live", false)).toMatch(/^LIVE mode, not set up/);
     expect(bannerText("live", null)).toMatch(/^LIVE mode\. Checking/);
     for (const t of [bannerText("mock", true), bannerText("live", true), bannerText("live", false)]) expect(/hosted/i.test(t)).toBe(false);
+  });
+});
+
+describe("shell bar (UI patterns sections 1 and 2)", () => {
+  it("brand, mode badge, the current page pill and the TopMenu sit in header.shell-bar; then main, whose first child is the banner", async () => {
+    render(<App />);
+    const bar = document.querySelector("header.shell-bar");
+    expect(bar).not.toBeNull();
+    expect(bar.querySelector(".shell-brand h1")).toHaveTextContent("P1AZ Inspector LAB");
+    expect(bar.querySelector(".shell-brand [data-testid=mode]")).toHaveTextContent("Mode: mock");
+    expect(bar.querySelector('.shell-nav a[aria-current="page"]')).toHaveTextContent("Console");
+    expect(bar.querySelector("[data-testid=top-menu]")).toHaveClass("shell-right");
+    expect(bar.nextElementSibling).toBe(screen.getByRole("main"));
+    expect(screen.getByRole("main").firstElementChild).toBe(screen.getByTestId("banner"));
+    await userEvent.click(screen.getByRole("link", { name: "Settings" }));
+    expect(bar.querySelector('.shell-nav a[aria-current="page"]')).toHaveTextContent("Settings");
+    expect(bar.querySelectorAll('.shell-nav a[aria-current="page"]')).toHaveLength(1);
+    expect(screen.getByRole("main").firstElementChild).toBe(screen.getByTestId("banner"));
   });
 });

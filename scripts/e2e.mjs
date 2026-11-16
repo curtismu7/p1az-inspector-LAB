@@ -58,7 +58,7 @@ try {
   check(/live settings are incomplete/.test((await live.getAttribute('title')) || ''), 'Live: the disabled option says why (settings incomplete)');
   check((await page.getByTestId('mode').innerText()) === 'Mode: mock', 'Live: the header stays in Mock');
 
-  await page.getByRole('tab', { name: 'Settings' }).click();
+  await page.getByRole('link', { name: 'Settings', exact: true }).click();
   await page.getByLabel('Environment ID').fill('00000000-0000-4000-8000-000000000000');
   await page.getByLabel('Worker client ID').fill('e2e-client');
   await page.getByLabel('Worker client secret').fill(SECRET);
@@ -74,7 +74,7 @@ try {
   await page.getByTestId('mode-select').selectOption('mock');
   await page.screenshot({ path: path.join(shots, 'settings.png') });
 
-  await page.getByRole('tab', { name: 'How it fits' }).click();
+  await page.getByRole('link', { name: 'How it fits', exact: true }).click();
   await page.getByRole('button', { name: 'Simulate' }).click();
   await page.getByTestId('caption').getByText(/Step 1/).waitFor();
   check(true, 'Diagram: Simulate shows a captioned step');
@@ -84,7 +84,7 @@ try {
   await page.screenshot({ path: path.join(shots, 'diagram.png') });
 
   // Rule 3: Reset session in a real browser clears the server's call log, and says so.
-  await page.getByRole('tab', { name: 'Console' }).click();
+  await page.getByRole('link', { name: 'Console', exact: true }).click();
   await page.getByText('Calls this session').waitFor();
   await page.getByText('No calls yet. Press Send.').waitFor({ state: 'detached' }); // the list loads after the page mounts
   check(true, 'Reset session: the Console has calls before it');
