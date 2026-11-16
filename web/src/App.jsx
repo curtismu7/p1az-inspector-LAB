@@ -102,7 +102,6 @@ export default function App() {
           theme={{ value: theme, onChange: setTheme }}
           fontSize={{ value: fontStep, onChange: setFontStep }}
           present={{ active: presenter, onToggle: () => setPresenter((v) => !v), label: "Presenter (P)" }}
-          shelfUrl="https://local.ping-devops.com:8443/"
           help={{ href: "https://github.com/curtismu7/p1az-inspector-LAB#readme" }}
           version={VERSION}
           onReset={reset}

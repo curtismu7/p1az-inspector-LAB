@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.2.0 (unreleased): brought to the -LAB standard
+- One Shelf link in the header: the hard-coded `shelfUrl` prop on the top menu is gone, so the only Shelf link is `<ShelfLink />`, which reads `GET /api/shelf`. A run with no shelf URL configured (plain Docker, for example) shows no Shelf link.
 - Verification mark in the header: the shared `VerifyMark` (vendored from AI-DEMO-Standalone `shared/verify-mark`, byte for byte, pinned) shows this lab's Verified / In progress mark from the demo shelf, inside the top menu beside the Shelf link. It reads the same `GET /api/shelf` call the Shelf link makes, so it shows through the lab-proxy (where that call reaches the shelf) and nothing when the lab is opened on its own port, when the shelf has no mark for it, or when the shelf is unreachable.
 - Answer the lab-proxy host name (fixes `bad_host` behind the family lab-proxy): `LAB_ALLOWED_HOSTS` (comma separated host names, loopback always works, unset = loopback only, a bad name refuses to start before the health timer starts and in the doctor) is added to the Host allowlist next to `P1AZ_ALLOWED_HOSTS`, which is unchanged. A write whose `Origin` equals the proxy's `X-Forwarded-Proto://X-Forwarded-Host` is accepted only when `Host` is a `LAB_ALLOWED_HOSTS` name. Compose defaults it to this app's proxy name.
 - New repo `p1az-inspector-LAB` with a clean single-commit history, exported from the previous repo's main (no history carried over).
