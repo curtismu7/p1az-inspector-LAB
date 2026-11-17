@@ -373,6 +373,15 @@ test('the shared settings file offers only its four PingOne keys, is never writt
   assert.equal(view.environmentId, ENV_ID);
   assert.equal(view.region, 'eu');
   assert.equal(view.clientId, 'shared-client', 'the worker client id comes from the shared file');
+  // The PINGONE_WORKER_* names (what scripts/pingone-setup.sh writes) win over the older PINGONE_CLIENT_* names.
+  const workerFile = path.join(root, 'worker.env');
+  fs.writeFileSync(workerFile, `PINGONE_ENVIRONMENT_ID=${ENV_ID}\nPINGONE_WORKER_CLIENT_ID=worker-client\nPINGONE_WORKER_CLIENT_SECRET=worker-secret-888\nPINGONE_CLIENT_ID=older-client\nPINGONE_CLIENT_SECRET=older-secret-999\n`, { mode: 0o600 });
+  const workerView = createSettings({ dir: path.join(root, 'own2'), env: { STANDALONE_ENV: workerFile, DATA_DIR: path.join(root, 'own2') } }).publicView();
+  assert.equal(workerView.clientId, 'worker-client', 'PINGONE_WORKER_CLIENT_ID wins');
+  assert.equal(workerView.clientSecret, 'set', 'the worker secret is picked up');
+  const olderView = createSettings({ dir: path.join(root, 'own3'), env: { STANDALONE_ENV: path.join(root, 'older.env'), DATA_DIR: path.join(root, 'own3') } });
+  fs.writeFileSync(path.join(root, 'older.env'), `PINGONE_CLIENT_ID=older-client\nPINGONE_CLIENT_SECRET=older-secret-999\n`, { mode: 0o600 });
+  assert.equal(olderView.publicView().clientId, 'older-client', 'the older PINGONE_CLIENT_ID name still works');
   assert.equal(view.clientSecret, 'set', 'the worker secret from the shared file is reported as set, never as a value');
   assert.equal(settings.configured(), true);
   assert.ok(!JSON.stringify(view).includes(SHARED_SECRET));

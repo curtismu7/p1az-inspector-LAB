@@ -32,8 +32,8 @@ Mock needs no settings. For Live, the app reads four optional PingOne keys from 
 
 - `PINGONE_ENVIRONMENT_ID` (optional): the PingOne environment UUID, used as a default.
 - `PINGONE_REGION` (optional): `com`, `eu`, `ca`, `asia`, `com.au` or `sg`, used as a default.
-- `PINGONE_CLIENT_ID` (optional): the PingOne worker application's client ID, used as a default.
-- `PINGONE_CLIENT_SECRET` (optional): that worker application's secret, used as a default. It is write-only here: no API, log, error or call detail ever returns it.
+- `PINGONE_WORKER_CLIENT_ID` (optional): the PingOne worker application's client ID, used as a default. This is the name `scripts/pingone-setup.sh` writes. The older `PINGONE_CLIENT_ID` / `PINGONE_CLIENT_SECRET` names are read too, with the `PINGONE_WORKER_*` names winning.
+- `PINGONE_WORKER_CLIENT_SECRET` (optional): that worker application's secret, used as a default. It is write-only here: no API, log, error or call detail ever returns it.
 
 Admin credentials and vault passwords never go in that file.
 

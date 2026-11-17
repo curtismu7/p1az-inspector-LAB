@@ -1,8 +1,9 @@
 // Live P1AZ settings, entered on the Settings page. Two sources, and this app writes only one of them:
 //  1. The family's one shared settings file, ~/Development/.env (STANDALONE_ENV overrides the path). READ ONLY, never written, and only
-//     four keys are ever taken from it (util.parseEnv, then picked): PINGONE_ENVIRONMENT_ID, PINGONE_REGION and the worker client
-//     PINGONE_CLIENT_ID and PINGONE_CLIENT_SECRET (owner, 2026-11-01). They are defaults. Admin credentials and vault passwords never
-//     belong in that file.
+//     the keys below are ever taken from it (util.parseEnv, then picked): PINGONE_ENVIRONMENT_ID, PINGONE_REGION and the worker
+//     client. The worker client is read under BOTH names — PINGONE_WORKER_CLIENT_ID / PINGONE_WORKER_CLIENT_SECRET first (what the
+//     family's scripts/pingone-setup.sh writes), then the older PINGONE_CLIENT_ID / PINGONE_CLIENT_SECRET — so a colleague's setup
+//     fills Live without hand-editing the file. They are defaults. Admin credentials and vault passwords never belong in that file.
 //  2. This app's own file, <dir>/settings.json (mode 600, DATA_DIR moves it): what is saved on the Settings page, plus the decision
 //     endpoint and the on-prem PingAuthorize URL. It overrides the shared defaults.
 //  Precedence: a value saved on the Settings page wins, otherwise the shared file. The worker client is one unit: if the app's own file
@@ -14,7 +15,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { parseEnv } from 'node:util';
 
-export const SHARED_KEYS = ['PINGONE_ENVIRONMENT_ID', 'PINGONE_REGION', 'PINGONE_CLIENT_ID', 'PINGONE_CLIENT_SECRET'];
+export const SHARED_KEYS = ['PINGONE_ENVIRONMENT_ID', 'PINGONE_REGION', 'PINGONE_WORKER_CLIENT_ID', 'PINGONE_WORKER_CLIENT_SECRET', 'PINGONE_CLIENT_ID', 'PINGONE_CLIENT_SECRET'];
 const REGIONS = new Set(['com', 'eu', 'asia', 'ca', 'com.au', 'sg']);
 const ENV_ID = /^[0-9a-f-]{8,40}$/i;
 
@@ -30,8 +31,10 @@ export function readSharedDefaults(file) {
   const out = {};
   if (typeof parsed.PINGONE_ENVIRONMENT_ID === 'string' && ENV_ID.test(parsed.PINGONE_ENVIRONMENT_ID.trim())) out.environmentId = parsed.PINGONE_ENVIRONMENT_ID.trim();
   if (typeof parsed.PINGONE_REGION === 'string' && REGIONS.has(parsed.PINGONE_REGION.trim())) out.region = parsed.PINGONE_REGION.trim();
-  if (typeof parsed.PINGONE_CLIENT_ID === 'string' && CLIENT_ID.test(parsed.PINGONE_CLIENT_ID.trim())) out.clientId = parsed.PINGONE_CLIENT_ID.trim();
-  if (typeof parsed.PINGONE_CLIENT_SECRET === 'string' && CLIENT_SECRET.test(parsed.PINGONE_CLIENT_SECRET.trim())) out.clientSecret = parsed.PINGONE_CLIENT_SECRET.trim();
+  const workerId = [parsed.PINGONE_WORKER_CLIENT_ID, parsed.PINGONE_CLIENT_ID].find((v) => typeof v === 'string' && CLIENT_ID.test(v.trim()));
+  const workerSecret = [parsed.PINGONE_WORKER_CLIENT_SECRET, parsed.PINGONE_CLIENT_SECRET].find((v) => typeof v === 'string' && CLIENT_SECRET.test(v.trim()));
+  if (workerId !== undefined) out.clientId = workerId.trim();
+  if (workerSecret !== undefined) out.clientSecret = workerSecret.trim();
   return out;
 }
 
