@@ -75,7 +75,7 @@ test('doctor lists the shared PingOne key names it can use, never their values',
   fs.writeFileSync(envFile, `PINGONE_ENVIRONMENT_ID=00000000-0000-4000-8000-000000000000\nPINGONE_CLIENT_ID=shared-client\nPINGONE_CLIENT_SECRET=${secret}\nVAULT_PASSWORD=other-apps-value\n`, { mode: 0o600 });
   const out = runChecks({ env: { DATA_DIR: path.join(root, 'own'), STANDALONE_ENV: envFile } });
   const d = find(out, 'shared-settings-file').detail;
-  assert.match(d, /usable PingOne keys: PINGONE_ENVIRONMENT_ID, PINGONE_CLIENT_ID, PINGONE_CLIENT_SECRET$/);
+  assert.match(d, /usable PingOne keys: PINGONE_ENVIRONMENT_ID, PINGONE_WORKER_CLIENT_ID or PINGONE_CLIENT_ID, PINGONE_WORKER_CLIENT_SECRET or PINGONE_CLIENT_SECRET$/);
   const text = JSON.stringify(out);
   for (const v of [secret, 'shared-client', 'other-apps-value', 'VAULT_PASSWORD']) assert.ok(!text.includes(v), `doctor output must not contain ${v === secret ? 'the secret' : v}`);
   fs.writeFileSync(envFile, 'OTHER=1\n', { mode: 0o600 });

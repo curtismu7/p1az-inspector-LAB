@@ -52,9 +52,9 @@ export function runChecks({ env = process.env, nodeVersion = process.versions.no
       const fm = fs.statSync(shared).mode & 0o777;
       // Key names only, never values: which of the four PingOne keys this app can use from the file.
       const d = readSharedDefaults(shared);
-      const names = [['environmentId', 'PINGONE_ENVIRONMENT_ID'], ['region', 'PINGONE_REGION'], ['clientId', 'PINGONE_CLIENT_ID'], ['clientSecret', 'PINGONE_CLIENT_SECRET']].filter(([k]) => d[k] !== undefined).map(([, n]) => n);
+      const names = [['environmentId', 'PINGONE_ENVIRONMENT_ID'], ['region', 'PINGONE_REGION'], ['clientId', 'PINGONE_WORKER_CLIENT_ID or PINGONE_CLIENT_ID'], ['clientSecret', 'PINGONE_WORKER_CLIENT_SECRET or PINGONE_CLIENT_SECRET']].filter(([k]) => d[k] !== undefined).map(([, n]) => n);
       add('shared-settings-file', fm & 0o077 ? 'fail' : 'pass', `${shared} mode ${fm.toString(8)}${fm & 0o077 ? ' (must be 600: run chmod 600)' : ''}; usable PingOne keys: ${names.length ? names.join(', ') : 'none'}`);
-    } else add('shared-settings-file', 'info', 'no shared settings file (Mock needs none; Live reads PINGONE_ENVIRONMENT_ID, PINGONE_REGION, PINGONE_CLIENT_ID and PINGONE_CLIENT_SECRET from it as defaults)');
+    } else add('shared-settings-file', 'info', 'no shared settings file (Mock needs none; Live reads PINGONE_ENVIRONMENT_ID, PINGONE_REGION and the worker client from it as defaults)');
   } catch (e) { add('shared-settings-file', 'fail', `cannot read ${shared}: ${e.code || 'error'}`); }
   return checks;
 }
