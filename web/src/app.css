@@ -66,8 +66,8 @@ input[type="checkbox"] { width: 20px; height: 20px; min-height: 0; accent-color:
 .console-form .panel { margin-bottom: 0; }
 .console-results { min-width: 0; }
 
-.modal-backdrop { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: rgb(0 0 0 / 0.45); padding: 16px; }
-.modal { width: min(460px, 100%); padding: 18px 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); box-shadow: 0 12px 40px rgb(0 0 0 / 0.35); }
+.modal-backdrop { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: var(--shadow-ink); padding: 16px; }
+.modal { width: min(460px, 100%); padding: 18px 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); box-shadow: 0 12px 40px var(--shadow-ink); }
 .modal h3 { margin-top: 0; color: var(--status-warn); }
 .modal label { display: block; margin: 10px 0 4px; font-size: 13px; font-weight: 600; }
 .modal input { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); color: var(--text); font-size: 16px; letter-spacing: 0.2em; }
