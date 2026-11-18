@@ -359,7 +359,7 @@ test('a PingOne reply that is not JSON never shows the worker secret, even partl
   } finally { await t.close(); }
 });
 
-test('the shared settings file offers only its four PingOne keys, is never written, and the old pingone.json is not read', async () => {
+test('the shared settings file offers only its PingOne keys (environment, region, worker client), is never written, and the old pingone.json is not read', async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'p1az-shared-'));
   const envFile = path.join(root, 'shared.env');
   const OTHER = 'other-apps-secret-value-777';
@@ -586,7 +586,7 @@ test('/api/recent scrubs the shared secret and the worker token from the PingOne
   });
 });
 
-test('only the four PingOne keys count: other secrets in the shared file never become the worker client', async () => {
+test('only the PingOne keys count: other secrets in the shared file never become the worker client', async () => {
   const OTHER = 'other-apps-secret-value-777';
   const base = `PINGONE_ENVIRONMENT_ID=${ENV_ID}\nPINGONE_CLIENT_ID=shared-client\n`;
   for (const extra of [`VAULT_PASSWORD=${OTHER}\n`, `PINGONE_ADMIN_CLIENT_SECRET=${OTHER}\n`, `PINGONE_ADMIN_SECRET=${OTHER}\nCLIENT_SECRET=${OTHER}\n`]) {
