@@ -39,6 +39,43 @@ describe("Console", () => {
     expect(calls.find((c) => c.key === "POST /api/evaluate").body.mode).toBe("mock");
   });
 
+  it("STEP_UP opens the OTP modal; the right code (123123) re-sends with the stronger ACR, a wrong code stays", async () => {
+    const stepUpCall = { id: "c1", at: 1, mode: "mock", preset: "txn-consent", ok: true, decision: "STEP_UP", ms: 3, statements: [{ code: "step-up", name: "Step-Up MFA Required", statement: "needs MFA" }], request: { parameters: {} }, raw: { decision: "PERMIT", obligations: [{ type: "STEP_UP_MFA" }] }, input: {} };
+    let n = 0;
+    globalThis.fetch = vi.fn(async (url, init = {}) => {
+      const method = init.method || "GET";
+      const body = init.body ? JSON.parse(init.body) : undefined;
+      if (url === "/api/settings" && method === "GET") return { ok: true, status: 200, json: async () => settings };
+      if (url === "/api/calls" && method === "GET") return { ok: true, status: 200, json: async () => ({ calls: n ? [stepUpCall] : [] }) };
+      if (url === "/api/evaluate") {
+        calls.push({ key: "POST /api/evaluate", body });
+        const params = body.parameters;
+        if (params.Acr === "step-up-ok") {
+          stored = [{ ...stepUpCall, decision: "PERMIT", statements: [{ code: "permit", name: "Transaction Approved", statement: "ok" }] }];
+        } else stored = [stepUpCall];
+        n += 1;
+        return { ok: true, status: 200, json: async () => stored[0] };
+      }
+      return { ok: false, status: 404, json: async () => ({ message: "no route" }) };
+    });
+    render(<Console goSettings={() => {}} />);
+    await userEvent.click(screen.getByRole("button", { name: "Send" }));
+    // STEP_UP answer opens the modal.
+    const dialog = await screen.findByRole("dialog", { name: /Step-Up Required/ });
+    expect(dialog).toBeInTheDocument();
+    // A wrong code keeps the dialog open with an error.
+    await userEvent.type(screen.getByLabelText("One-time code"), "999999");
+    await userEvent.click(screen.getByRole("button", { name: "Verify & finish run" }));
+    expect(await screen.findByText(/Wrong code/)).toBeInTheDocument();
+    // The right code closes the dialog and re-sends with the stronger ACR.
+    await userEvent.type(screen.getByLabelText("One-time code"), "123123");
+    await userEvent.click(screen.getByRole("button", { name: "Verify & finish run" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    const evaluates = calls.filter((c) => c.key === "POST /api/evaluate");
+    expect(evaluates).toHaveLength(2);
+    expect(evaluates[1].body.parameters.Acr).toBe("step-up-ok");
+  });
+
   it("shows the request and the response through the shared JsonPane: Form | JSON toggle, full view", async () => {
     render(<Console goSettings={() => {}} />);
     await userEvent.click(screen.getByRole("button", { name: "Send" }));
@@ -46,12 +83,11 @@ describe("Console", () => {
     const res = screen.getByTestId("call-response");
     expect(screen.getAllByRole("button", { name: "Form" })).toHaveLength(2);
     expect(screen.getAllByRole("button", { name: "JSON" })).toHaveLength(2);
-    expect(req).toHaveTextContent("Amount");
+    expect(req).toHaveTextContent("DecisionContext");
     expect(res).toHaveTextContent("DENY");
     await userEvent.click(screen.getAllByRole("button", { name: "JSON" })[0]);
     expect(screen.getByTestId("call-request").tagName).toBe("PRE");
-    expect(screen.getByTestId("call-request").textContent).toContain('"Amount": 500');
-    expect(screen.getByTestId("call-request").querySelector(".jtok--hot")).not.toBeNull();
+    expect(screen.getByTestId("call-request").textContent).toContain('"DecisionContext": "Transaction"');
   });
 
   it("Live is blocked until Settings is filled in, and offers the way there", async () => {
@@ -72,10 +108,13 @@ describe("Console", () => {
     await waitFor(() => expect(calls.find((c) => c.key === "POST /api/evaluate")?.body).toMatchObject({ mode: "live", endpointId: "ep1" }));
   });
 
-  it("builds the three parameter shapes", () => {
-    const f = { amount: "42", txType: "withdrawal", acr: "mfa", userId: "u", toolName: "t", audience: "a", resource: "r", hitl: true, rows: [{ key: "A", value: "1" }, { key: "", value: "x" }] };
-    expect(buildParameters("transaction", f)).toEqual({ Amount: 42, TransactionType: "withdrawal", Acr: "mfa", UserId: "u" });
-    expect(buildParameters("mcp", f)).toMatchObject({ DecisionContext: "McpToolCall", ToolName: "t", HitlApproved: true });
+  it("builds the five parameter shapes plus custom", () => {
+    const f = { amount: "42", txType: "withdrawal", acr: "mfa", userId: "u", toolName: "t", userTier: "gold", hitl: true, kidKnown: true, actMismatch: false, audMismatch: false, mandateMax: "500", agentName: "purchasing-agent", grantPresent: "true", grantConsented: "true", grantExpired: "false", grantAction: "pay", grantPayee: "ACME", grantMax: "500", requestAction: "pay", requestPayee: "ACME", airFare: "380", airInternational: false, airCabin: "business", airApproved: false, rows: [{ key: "A", value: "1" }, { key: "", value: "x" }] };
+    expect(buildParameters("txn-consent", f)).toEqual({ DecisionContext: "Transaction", AgentClass: "delegated", MandateMaxAmount: "0", Amount: 42, TransactionAmount: "42", TransactionType: "withdrawal", UserId: "u", Acr: "mfa", ActClientId: expect.any(String), TokenAudActual: expect.any(String), TokenIss: "", ResourceOwnerId: "", MayActSub: "", IntentTokenValid: "", IntentMatchesTool: "", IntentTokenError: "", IntentRequestAction: "", IntentGrantAction: "", IntentRequestPayee: "", IntentGrantPayee: "" });
+    expect(buildParameters("txn-mandate", f)).toMatchObject({ DecisionContext: "Transaction", AgentClass: "autonomous", MandateMaxAmount: "500", Amount: 42, ClientId: "purchasing-agent" });
+    expect(buildParameters("mcp-gate", f)).toMatchObject({ DecisionContext: "McpToolCall", McpMethod: "tools/call", ToolName: "t", HitlApproved: true, TokenAudience: expect.any(String) });
+    expect(buildParameters("intent", f)).toMatchObject({ DecisionContext: "IntentGovernance", IntentGrantPresent: "true", IntentRequestAmount: "42" });
+    expect(buildParameters("air", f)).toEqual({ AirLabMarker: "larkspur-air", ToolName: "book_airline_flight", UserId: "u", AirFare: "380", AirIsInternational: "false", AirCabinAsked: "business", AirApproval: "none" });
     expect(buildParameters("custom", f)).toEqual({ A: "1" });
   });
 });

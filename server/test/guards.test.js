@@ -154,9 +154,17 @@ test('Mock deny threshold: 2000 is allowed, 2001 is denied (transaction and MCP-
   assert.equal(RULES.denyAmountUsd, 2000);
   assert.equal(evaluate({ Amount: 2000, TransactionType: 'deposit' }).decision, 'PERMIT');
   assert.equal(evaluate({ Amount: 2001, TransactionType: 'deposit' }).decision, 'DENY');
-  assert.equal(evaluate({ DecisionContext: 'McpToolCall', ToolName: 'get_balance', Amount: 2000 }).decision, 'PERMIT');
-  assert.equal(evaluate({ DecisionContext: 'McpToolCall', ToolName: 'get_balance', Amount: 2001 }).decision, 'DENY');
+  // The MCP path requires the granted audience/actor/consent (as the live policy does); a bare request is denied.
+  const mcp = (amount) => evaluate({
+    DecisionContext: 'McpToolCall', ToolName: 'get_balance', Amount: amount,
+    TokenAudience: RULES.mcpAudience, TokenAudActual: RULES.mcpAudience,
+    ActClientId: RULES.mcpActor, ActChainDepth: 1, MayActSub: RULES.mcpActor, InRequiredGroup: 'true', ResourceOwnerId: '',
+  });
+  assert.equal(mcp(2000).decision, 'PERMIT');
+  assert.equal(mcp(2001).decision, 'DENY');
+  assert.equal(evaluate({ DecisionContext: 'McpToolCall', ToolName: 'get_balance', Amount: 2000 }).decision, 'DENY');
 });
+
 
 test('Live on the PingOne cloud path holds a permit for the token host, then the API host, one at a time, and none afterwards', async () => {
   const held = [];

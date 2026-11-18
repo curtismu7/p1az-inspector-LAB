@@ -46,7 +46,7 @@ try {
   await page.getByLabel('Amount').fill('5000');
   await page.getByRole('button', { name: 'Send' }).click();
   await page.getByTestId('detail').getByText('Deny').first().waitFor();
-  check((await page.getByTestId('detail').innerText()).includes('Over the limit'), 'Mock: 5000 is denied with the statement');
+  check((await page.getByTestId('detail').innerText()).includes('Transaction Denied'), 'Mock: 5000 is denied with the statement');
   await page.screenshot({ path: path.join(shots, 'console-mock.png') });
 
   check((await page.getByTestId('banner').innerText()).startsWith('MOCK mode'), 'Mock: the banner says MOCK');

@@ -29,13 +29,61 @@ async function boot({ fetchImpl } = {}) {
 
 test('mock engine: the documented rules', () => {
   assert.equal(evaluate({ Amount: 5000, TransactionType: 'transfer' }).decision, 'DENY');
-  assert.equal(evaluate({ Amount: 100, TransactionType: 'transfer' }).decision, 'CONSENT');
-  assert.equal(evaluate({ Amount: 600, TransactionType: 'withdrawal', Acr: '' }).decision, 'STEP_UP');
-  assert.equal(evaluate({ Amount: 600, TransactionType: 'withdrawal', Acr: 'Multi_Factor' }).decision, 'PERMIT');
+  assert.equal(evaluate({ Amount: 100, TransactionType: 'transfer' }).decision, 'PERMIT');
+  assert.equal(evaluate({ Amount: RULES.consentAmountUsd, TransactionType: 'transfer' }).decision, 'CONSENT');
+  assert.equal(evaluate({ Amount: 100, TransactionType: 'withdrawal', Acr: '' }).decision, 'PERMIT');
+  assert.equal(evaluate({ Amount: RULES.stepUpAmountUsd, TransactionType: 'withdrawal', Acr: '' }).decision, 'STEP_UP');
+  assert.equal(evaluate({ Amount: RULES.stepUpAmountUsd, TransactionType: 'withdrawal', Acr: 'Multi_Factor' }).decision, 'PERMIT');
   assert.equal(evaluate({ Amount: 50, TransactionType: 'deposit' }).decision, 'PERMIT');
-  assert.equal(evaluate({ DecisionContext: 'McpToolCall', ToolName: 'delete_account' }).decision, 'DENY');
-  assert.equal(evaluate({ DecisionContext: 'McpToolCall', ToolName: RULES.hitlTools[0] }).decision, 'CONSENT');
-  assert.equal(evaluate({ DecisionContext: 'McpToolCall', ToolName: RULES.hitlTools[0], HitlApproved: true }).decision, 'PERMIT');
+});
+
+// The five presets mirror the live policies (live-verified 2026-11-18). Each assertion pairs a mock answer with
+// the statement code the real PingOne policy returned for the same parameters.
+test('mock mirrors the live policies: transaction bands, mandate/CIBA, MCP gate, intent, airline', () => {
+  // 1. Transaction bands (endpoint c9e87348: transaction-approved / step-up / consent / denied)
+  const txn = (p) => evaluate({ DecisionContext: 'Transaction', AgentClass: 'delegated', ...p });
+  assert.equal(txn({ Amount: 300, TransactionType: 'transfer', Acr: 'mfa' }).statements[0].code, 'consent');
+  assert.equal(txn({ Amount: 300, TransactionType: 'payment', Acr: 'mfa' }).statements[0].code, 'permit');
+  assert.equal(txn({ Amount: 2500, TransactionType: 'payment', Acr: 'mfa' }).statements[0].code, 'amount-deny');
+  const stepUp = txn({ Amount: 900, TransactionType: 'withdrawal', Acr: 'pwd' });
+  assert.equal(stepUp.decision, 'STEP_UP');
+  assert.equal(stepUp.statements[0].code, 'step-up');
+  // 2. Autonomous mandate / CIBA
+  assert.equal(evaluate({ DecisionContext: 'Transaction', AgentClass: 'autonomous', MandateMaxAmount: '0', Amount: 300 }).statements[0].code, 'no-mandate');
+  assert.equal(evaluate({ DecisionContext: 'Transaction', AgentClass: 'autonomous', MandateMaxAmount: '500', Amount: 900 }).statements[0].code, 'ciba');
+  assert.equal(evaluate({ DecisionContext: 'Transaction', AgentClass: 'autonomous', MandateMaxAmount: '500', Amount: 300 }).decision, 'PERMIT');
+  // 3. MCP gate (endpoint 1f9e9c71: mcp-tool-authorized / mcp-authorization-denied chain)
+  const mcp = (p) => evaluate({ DecisionContext: 'McpToolCall', McpMethod: 'tools/call', TokenAudActual: RULES.mcpAudience, TokenAudience: RULES.mcpAudience, ActClientId: RULES.mcpActor, ActChainDepth: 1, MayActSub: RULES.mcpActor, InRequiredGroup: 'true', ResourceOwnerId: '', ...p });
+  assert.equal(mcp({ UserId: 'alice', ToolName: 'get_account', Amount: 0 }).statements[0].code, 'mcp-tool-authorized');
+  assert.equal(mcp({ UserId: 'alice', ToolName: 'get_account', Amount: 0, TokenAudience: 'evil.example', TokenAudActual: 'evil.example' }).statements[0].code, 'mcp-audience-denied');
+  assert.equal(mcp({ UserId: 'alice', ToolName: 'get_account', Amount: 0, ActClientId: 'rogue' }).statements[0].code, 'mcp-actor-denied');
+  assert.equal(mcp({ UserId: 'alice', ToolName: 'get_account', Amount: 0, MayActSub: 'bob' }).statements[0].code, 'no_user_consent');
+  assert.equal(mcp({ UserId: 'alice', ToolName: 'view_statements', Amount: 0, InRequiredGroup: 'false' }).statements[0].code, 'mcp-group-denied');
+  assert.equal(mcp({ UserId: 'alice', ToolName: 'view_statements', Amount: 0, ResourceOwnerId: 'user-B' }).statements[0].code, 'mcp-resource-owner-denied');
+  assert.equal(mcp({ UserId: 'alice', ToolName: 'create_transfer', Amount: 500 }).statements[0].code, 'hitl');
+  assert.equal(mcp({ UserId: 'alice', ToolName: 'create_transfer', Amount: 500, HitlApproved: true }).statements[0].code, 'mcp-tool-authorized');
+  const mcpStep = mcp({ UserId: 'alice', ToolName: 'create_withdrawal', Amount: 900, TransactionType: 'withdrawal', Acr: 'pwd', HitlApproved: true });
+  assert.equal(mcpStep.decision, 'PERMIT');
+  assert.equal(mcpStep.statements[0].code, 'step-up');
+  assert.equal(mcp({ UserId: 'alice', ToolName: 'create_transfer', Amount: 5000, UserTier: 'silver', HitlApproved: true }).statements[0].code, 'mcp-tier-denied');
+  assert.equal(mcp({ UserId: 'alice', ToolName: 'create_transfer', Amount: 500, RarMaxAmount: 100, HitlApproved: true }).statements[0].code, 'mcp-rar-denied');
+  assert.equal(mcp({ UserId: 'alice', ToolName: 'get_account', Amount: 0, TokenKidKnown: false, TokenKid: 'forged' }).statements[0].code, 'mcp-kid-denied');
+  // 4. Intent governance (endpoint 08da70dd: Intent — … statements)
+  const intent = (p) => evaluate({ DecisionContext: 'IntentGovernance', IntentGrantPresent: 'true', IntentGrantConsented: 'true', IntentGrantExpired: 'false', IntentGrantAction: 'pay', IntentGrantPayee: 'ACME', IntentGrantMaxAmount: '500', IntentRequestAction: 'pay', IntentRequestPayee: 'ACME', IntentRequestAmount: '100', ...p });
+  assert.equal(intent({}).statements[0].code, 'intent-within-grant');
+  assert.equal(intent({ IntentGrantPresent: 'false' }).statements[0].code, 'intent-no-grant');
+  assert.equal(intent({ IntentGrantConsented: 'false' }).statements[0].code, 'intent-not-consented');
+  assert.equal(intent({ IntentGrantExpired: 'true' }).statements[0].code, 'intent-expired');
+  assert.equal(intent({ IntentRequestPayee: 'Evil Corp' }).statements[0].code, 'intent-payee-drift');
+  assert.equal(intent({ IntentRequestAmount: '900' }).statements[0].code, 'intent-amount-drift');
+  assert.equal(intent({ IntentRequestAction: 'export' }).statements[0].code, 'intent-action-drift');
+  // 5. Larkspur Air (endpoint 72f4609b: the seven canonical string parameters)
+  const air = (p) => evaluate({ AirLabMarker: 'larkspur-air', ToolName: 'book_airline_flight', UserId: 'alice', AirFare: '380', AirIsInternational: 'false', AirCabinAsked: 'business', AirApproval: 'none', ...p });
+  assert.equal(air({}).statements[0].code, 'airline-permit-as-asked');
+  assert.equal(air({ AirFare: '380', AirIsInternational: 'true' }).statements[0].code, 'airline-economy-intl');
+  assert.equal(air({ AirFare: '780' }).statements[0].code, 'airline-economy-over-limit');
+  assert.equal(air({ AirFare: '2400', AirIsInternational: 'true' }).statements[0].code, 'airline-approval-required');
+  assert.equal(air({ AirFare: '2400', AirIsInternational: 'true', AirApproval: 'verified' }).statements[0].code, 'airline-approved-as-asked');
 });
 
 test('mock mode needs no setup and records which engine answered', async () => {
