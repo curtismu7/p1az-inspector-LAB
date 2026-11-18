@@ -28,16 +28,20 @@ Open http://127.0.0.1:4840/. With no setup at all, Mock works: press Send on the
 
 ## Settings file
 
-Mock needs no settings. For Live, the app reads four optional PingOne keys from the family's one shared settings file, `~/Development/.env` (mode 600; `STANDALONE_ENV` overrides the path). It only reads that file, never writes it, and takes only these four keys:
+Mock needs no settings. For Live, the app reads optional PingOne keys from the family's one shared settings file, `~/Development/.env` (mode 600; `STANDALONE_ENV` overrides the path). It only reads that file, never writes it, and takes only these keys (the worker client under two name pairs, the first winning):
 
 - `PINGONE_ENVIRONMENT_ID` (optional): the PingOne environment UUID, used as a default.
 - `PINGONE_REGION` (optional): `com`, `eu`, `ca`, `asia`, `com.au` or `sg`, used as a default.
 - `PINGONE_WORKER_CLIENT_ID` (optional): the PingOne worker application's client ID, used as a default. This is the name `scripts/pingone-setup.sh` writes. The older `PINGONE_CLIENT_ID` / `PINGONE_CLIENT_SECRET` names are read too, with the `PINGONE_WORKER_*` names winning.
 - `PINGONE_WORKER_CLIENT_SECRET` (optional): that worker application's secret, used as a default. It is write-only here: no API, log, error or call detail ever returns it.
 
+The older `PINGONE_CLIENT_ID` and `PINGONE_CLIENT_SECRET` stay a documented fallback so an existing file keeps working; when both pairs are present the `PINGONE_WORKER_*` pair wins. There is no default Live target: you supply your own PingOne environment, or your own on-prem PingAuthorize URL, on the **Settings** page, and Live stays disabled with the reason until you do. Nothing here points at another demo suite.
+
+**No PingOne or PingAuthorize to hand?** `mock-authorize-LAB` (port 4850) can stand in for either. On-prem: choose "PingAuthorize on-prem (Docker)" in Settings and enter `http://127.0.0.1:4850` (from a container `http://host.docker.internal:4850`). Cloud: put `http://127.0.0.1:4850/pingone` in the advanced "PingOne base URL" field, which must be loopback. That is a stand-in, not a real Live check.
+
 Admin credentials and vault passwords never go in that file.
 
-**Host runs only.** These four keys are read when you run the app on your machine (`npm start`). The Docker form reads no host files (it mounts nothing from your home folder), so in Docker enter the same values on the **Settings** page; they are kept in the container's named volume. Mounting the shared file into the container is an owner decision and is not done.
+**Host runs only.** These keys are read when you run the app on your machine (`npm start`). The Docker form reads no host files (it mounts nothing from your home folder), so in Docker enter the same values on the **Settings** page; they are kept in the container's named volume. Mounting the shared file into the container is an owner decision and is not done.
 
 Anything you enter on the **Settings** page the app keeps in its own owner-only file, `~/.p1az-inspector/settings.json` (folder mode 700, file mode 600; `DATA_DIR` moves it): the environment, region and worker client if you want to override the shared file, the default decision endpoint, and the on-prem PingAuthorize URL and policy ID. The worker secret is write-only (no API or page ever returns it, and any server echo of it is scrubbed). **Precedence:** a value saved on the Settings page wins over the shared file. The worker client ID and secret are one unit: if you save a client ID or secret on the Settings page, both come from the app's own file, otherwise both come from the shared file. Live stays refused until the environment, client ID and secret are all set. A Save that changes nothing does not copy the shared environment, region or client into the app's own file, so later edits to the shared file still take effect; a value you actually change is saved and wins. The old `~/.config/demo-kit/pingone.json` is no longer read or written.
 
@@ -89,7 +93,7 @@ The port is published on 127.0.0.1 only (`HOST_PORT` changes the host port). The
 npm test
 ```
 
-On Node 26 this runs the server tests (`node --test test/*.test.js`), the web tests (vitest) and the repo tests (`node --test scripts/*.test.mjs`). Expected on a clean `npm ci`: 65 server, 29 web and 17 repo tests, all passing (111). `npm run e2e` drives a real browser (build first; Mock only, no PingOne). The Learning Hub pack is `content-pack.json`; `npm run content-pack` regenerates and validates it (never hand-edit it).
+On Node 26 this runs the server tests (`node --test test/*.test.js`), the web tests (vitest) and the repo tests (`node --test scripts/*.test.mjs`). Expected on a clean `npm ci`: 80 server, 36 web and 18 repo tests, all passing (134). `npm run e2e` drives a real browser (build first; Mock only, no PingOne). The Learning Hub pack is `content-pack.json`; `npm run content-pack` regenerates and validates it (never hand-edit it).
 
 ## Troubleshooting
 
