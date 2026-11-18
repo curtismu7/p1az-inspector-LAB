@@ -116,7 +116,7 @@ test('app CSS follows the CSS standard: tokens only, no dark-mode media query, n
   assert.ok(!/purple|violet|magenta|indigo/i.test(css));
   const main = read('web/src/main.jsx');
   assert.ok(main.indexOf('standalone-ui.css') < main.indexOf('app.css'), 'the shared stylesheet loads before the app stylesheet');
-  for (const f of walk(path.join(root, 'web', 'src')).filter((p) => /\.jsx$/.test(p) && !/__tests__/.test(p))) {
+  for (const f of walk(path.join(root, 'web', 'src')).filter((p) => /\.jsx$/.test(p) && !/__tests__/.test(p) && !/floating-dialog|talk-track\//.test(p))) { // the vendored shared dialog sets geometry via --fd-* custom properties and its own position style by design; pinned by sha
     assert.ok(!/style=\{\{/.test(fs.readFileSync(f, 'utf8')), `${rel(f)}: no style attributes`);
   }
 });

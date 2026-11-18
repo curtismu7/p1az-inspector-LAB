@@ -6,6 +6,8 @@ import Console from "./pages/Console.jsx";
 import Diagram from "./pages/Diagram.jsx";
 import Settings from "./pages/Settings.jsx";
 import TopMenu, { applyFontSize } from "./top-menu/TopMenu.jsx";
+import TalkTrackDialog from "./talk-track/TalkTrackDialog.jsx";
+import talkMd from "../../docs/talk-track.md?raw";
 import { get, post } from "./lib/api.js";
 
 const VERSION = (() => { try { return JSON.parse(fs.readFileSync(new URL("../../package.json", import.meta.url), "utf8")).version || null; } catch { return null; } })();
@@ -27,6 +29,15 @@ export function bannerText(mode, liveConfigured) {
 
 export default function App() {
   const [mode, setModeState] = useState("mock");
+  const [talkOpen, setTalkOpen] = useState(false);
+  const talkSteps = (() => {
+    const steps = []; let n = 0;
+    for (const line of talkMd.split("\n")) {
+      const m = line.match(/^\d+\.\s+(?:"(.+?)"|\*\*(.+?)\.\*\*\s*(.*))$/);
+      if (m) { n += 1; steps.push({ id: `s${n}`, title: (m[1] || m[2]).slice(0, 60), say: m[1] || m[3] }); }
+    }
+    return steps.length ? steps : [{ id: "s1", title: "Talk track", say: talkMd.slice(0, 600) }];
+  })();
   const [liveConfigured, setLiveConfigured] = useState(null); // null = not known yet
   const [modeInfo, setModeInfo] = useState(null);
   const [switching, setSwitching] = useState(false);
@@ -102,6 +113,7 @@ export default function App() {
           theme={{ value: theme, onChange: setTheme }}
           fontSize={{ value: fontStep, onChange: setFontStep }}
           present={{ active: presenter, onToggle: () => setPresenter((v) => !v), label: "Presenter (P)" }}
+          talkTrack={{ active: talkOpen, onToggle: () => setTalkOpen((v) => !v) }}
           help={{ href: "https://github.com/curtismu7/p1az-inspector-LAB#readme" }}
           version={VERSION}
           onReset={reset}
@@ -117,6 +129,8 @@ export default function App() {
           {page === "settings" && <Settings onSaved={() => { loadConfig(); loadInfo(); }} />}
           {page === "diagram" && <Diagram theme={theme} />}
         </div>
+      <TalkTrackDialog isOpen={talkOpen} onClose={() => setTalkOpen(false)} talk={talkSteps} />
+
       </main>
       <p className="sr-only" role="status">{resetNote}</p>
     </div>
