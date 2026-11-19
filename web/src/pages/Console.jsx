@@ -103,7 +103,7 @@ export default function Console({ mode = "mock", goSettings }) {
 
   return (
     <>
-      <h2>Authorize decisions</h2>
+      <h2 data-n="1">Authorize decisions</h2>
       <p className="lede">Send a request to PingOne Authorize and see the verdict, the statements it returned, and the exact call behind it. Mock is the default and needs nothing. Switch to Live in the header for an on-prem PingAuthorize or your own PingOne environment.</p>
 
       <div className="panel panel--row">

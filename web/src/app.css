@@ -44,7 +44,7 @@ a { color: var(--focus); }
 .alert { padding: 8px 12px; border: 1px solid var(--danger-text); border-radius: 6px; background: var(--accent-soft); color: var(--danger-text); overflow-wrap: anywhere; }
 .controls { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 16px; }
 .controls h3 { margin: 0; }
-.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 224px), 1fr)); gap: 12px; margin: 12px 0; }
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
 .fields > * { min-width: 0; }
 .fields label, .controls label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; }
 .fields input, .fields select { width: 100%; }
@@ -63,6 +63,14 @@ input[type="checkbox"] { width: 20px; height: 20px; min-height: 0; accent-color:
 
 /* The Console: the decision form on the left, calls + detail on the right (one column on small screens). */
 .console-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+.step-num { display: inline-grid; place-items: center; min-width: 1.4rem; height: 1.4rem; border-radius: 999px;
+  background: var(--accent-gradient); color: var(--on-accent); font: 700 0.75rem var(--font-mono);
+  margin-right: 0.5em; vertical-align: 2px; }
+h2[data-n]::before { content: attr(data-n); display: inline-grid; place-items: center; min-width: 1.4rem; height: 1.4rem;
+  border-radius: 999px; background: var(--accent-gradient); color: var(--on-accent); font: 700 0.75rem var(--font-mono);
+  margin-right: 0.5em; vertical-align: 2px; }
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+@media (max-width: 900px) { .fields { grid-template-columns: 1fr; } }
 .console-form .panel { margin-bottom: 0; }
 .console-results { min-width: 0; }
 
