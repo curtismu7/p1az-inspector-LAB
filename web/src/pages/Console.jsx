@@ -254,7 +254,7 @@ function StepUpModal({ onDone, busy = false }) {
 }
 
 // Keys that matter in this lab's payloads: what the policy decides on (request) and what it hands back to act on (response). `decision` is already in the alert colour.
-const REQUEST_HOT = ["Amount", "TransactionAmount", "TransactionType", "Acr", "ToolName", "HitlApproved", "TokenAudience", "TokenAudActual", "ActClientId", "MayActSub", "UserTier", "MandateMaxAmount", "AgentClass", "IntentGrantPresent", "IntentGrantAction", "IntentRequestAction", "IntentGrantPayee", "IntentRequestPayee", "IntentRequestAmount", "IntentGrantMaxAmount", "AirFare", "AirIsInternational", "AirCabinAsked", "AirApproval"];
+const REQUEST_HOT = ["Amount", "TransactionType", "Acr"];
 const RESPONSE_HOT = ["obligations", "statements"];
 
 function Detail({ call }) {
